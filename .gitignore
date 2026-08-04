@@ -1,0 +1,24 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# 인증정보 — 절대 커밋 금지.
+# extract/.env 에 KAMIS·datago(기상청·특일정보와 공용)·MAFRA 키가 들어있다.
+.env
+*.env
+!.env.example
+
+# 편집기·OS
+.DS_Store
+.idea/
+.vscode/
+
+# 노트북 체크포인트
+.ipynb_checkpoints/

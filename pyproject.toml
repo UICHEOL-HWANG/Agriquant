@@ -1,0 +1,27 @@
+[project]
+name = "agriquant"
+version = "0.1.0"
+description = "농산물 도매가격 데이터 파이프라인 (KAMIS·공공데이터포털·기상청 → BigQuery)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "db-dtypes>=1.7.1",
+    "google-cloud-bigquery>=3.25",
+    "pandas>=3.0.5",
+    "pandas-gbq>=0.35.0",
+    "pyarrow>=25.0.0",
+    "python-dotenv>=1.2.2",
+    "requests>=2.34.2",
+]
+
+# 프로젝트를 editable 로 설치하기 위한 최소 설정.
+# 이게 없으면 uv 가 의존성만 관리하고 프로젝트 자신은 설치하지 않아서,
+# 저장소 루트가 cwd 일 때만(= main.py 실행) import 가 된다. notebooks/
+# 처럼 하위 디렉터리에서 열면 `from extract...` 가 ModuleNotFoundError 다.
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# main.py 는 패키지가 아니라 실행 스크립트라 넣지 않는다.
+packages = ["extract", "transform"]
