@@ -1,5 +1,6 @@
 # clients/base_client.py
 import logging
+import time
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -8,6 +9,18 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
+# ── 재시도 정책 ──────────────────────────────────────────────
+# 일시적 오류는 재시도한다. 백필은 요청이 1만 건 단위라 그중 몇 건이 그냥
+# 실패하면 그날치가 통째로 빈 채 남는데, 상위 로직은 빈 응답을 '0행'으로
+# 읽어 넘어가므로(iter_shipment 의 totalCount=0) 로그만 봐서는 진짜 휴장인지
+# 수집 실패인지 구분할 수 없다. 조용한 구멍을 만들지 않으려는 장치다.
+_MAX_ATTEMPTS = 3           # 최초 시도 포함
+_BACKOFF_SEC = 1.0          # 1s → 2s (지수 백오프)
+
+# 재시도할 상태코드. 4xx 는 요청 자체가 틀린 것이라 다시 보내도 같으므로
+# 제외하고, 429(호출 제한)와 5xx(서버 일시 장애)만 다시 시도한다.
+_RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
 
 # 로그에 값을 남기면 안 되는 쿼리 파라미터 (소문자로 비교)
 _SECRET_PARAMS = {"p_cert_key", "p_cert_id", "servicekey", "apikey", "api_key"}
@@ -81,24 +94,62 @@ class BaseClient:
     def _get(self, url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """안전한 HTTP GET 요청 실행 메서드.
 
+        일시적 오류(타임아웃·연결 끊김·429·5xx·JSON 파싱 실패)는 백오프를
+        두고 _MAX_ATTEMPTS 까지 다시 시도한다. JSON 파싱 실패까지 재시도에
+        넣은 이유는 data.go.kr 이 과부하일 때 JSON 대신 XML 오류 페이지를
+        내려주기 때문이다 — 형식은 깨졌지만 원인은 일시적 서버 상태다.
+
+        모두 소진하면 종전대로 {} 를 반환한다. 상위 클라이언트들
+        (mafra/kma/kasi)이 '빈 dict = 실패'로 보고 걸러내는 계약이라
+        여기서 예외를 올리면 그쪽 처리가 어긋난다.
+
         오류 로그에는 인증키를 가린 URL·메시지만 남긴다(_mask).
         """
         safe_url = _mask(url)
-        try:
-            response = self.session.get(url, params=params, timeout=self.timeout)
-            response.raise_for_status()  # 4xx, 5xx 에러 발생 시 예외 발생
-            return response.json()
-        except requests.exceptions.Timeout:
-            logging.error(f"[Timeout Error] 요청 시간 초과: {safe_url}")
-            return {}
-        except requests.exceptions.HTTPError as e:
-            logging.error(
-                f"[HTTP Error] 상태 코드 {response.status_code}: {safe_url} - {_mask(str(e))}"
-            )
-            return {}
-        except requests.exceptions.JSONDecodeError:
-            logging.error(f"[JSON Error] 응답 결과를 JSON으로 파싱할 수 없음: {safe_url}")
-            return {}
-        except Exception as e:
-            logging.error(f"[Unknown Error] 알 수 없는 오류 발생 ({safe_url}): {_mask(str(e))}")
-            return {}
+
+        for attempt in range(1, _MAX_ATTEMPTS + 1):
+            # 마지막 시도면 더 기다릴 것 없이 실패로 확정한다.
+            last = attempt == _MAX_ATTEMPTS
+
+            def retry_or_fail(label: str, detail: str) -> Optional[Dict[str, Any]]:
+                """재시도 여지가 있으면 대기 후 None, 없으면 오류 로그 후 {}."""
+                if last:
+                    logging.error(f"[{label}] {detail} (시도 {attempt}/{_MAX_ATTEMPTS}, 포기)")
+                    return {}
+                wait = _BACKOFF_SEC * 2 ** (attempt - 1)
+                logging.warning(
+                    f"[{label}] {detail} (시도 {attempt}/{_MAX_ATTEMPTS}, {wait:.0f}s 후 재시도)"
+                )
+                time.sleep(wait)
+                return None
+
+            try:
+                response = self.session.get(url, params=params, timeout=self.timeout)
+                response.raise_for_status()  # 4xx, 5xx 에러 발생 시 예외 발생
+                return response.json()
+            except requests.exceptions.Timeout:
+                result = retry_or_fail("Timeout Error", f"요청 시간 초과: {safe_url}")
+            except requests.exceptions.ConnectionError as e:
+                result = retry_or_fail(
+                    "Connection Error", f"연결 실패: {safe_url} - {_mask(str(e))}"
+                )
+            except requests.exceptions.HTTPError as e:
+                status = response.status_code
+                detail = f"상태 코드 {status}: {safe_url} - {_mask(str(e))}"
+                if status in _RETRY_STATUS:
+                    result = retry_or_fail("HTTP Error", detail)
+                else:
+                    logging.error(f"[HTTP Error] {detail}")   # 4xx 는 재시도해도 같다
+                    return {}
+            except requests.exceptions.JSONDecodeError:
+                result = retry_or_fail(
+                    "JSON Error", f"응답 결과를 JSON으로 파싱할 수 없음: {safe_url}"
+                )
+            except Exception as e:
+                logging.error(f"[Unknown Error] 알 수 없는 오류 발생 ({safe_url}): {_mask(str(e))}")
+                return {}
+
+            if result is not None:   # 재시도 소진 → {}
+                return result
+
+        return {}   # 도달하지 않지만 반환 타입을 명확히 한다
