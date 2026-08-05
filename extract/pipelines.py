@@ -29,7 +29,15 @@ from extract.config.items import (
     ItemTarget,
     WeatherStation,
 )
-from extract.database import BigQueryRepository
+from extract.database import (
+    REPLACE_RANGE,
+    SHIPMENT,
+    WEATHER,
+    WHOLESALE_AGG,
+    WHOLESALE_OBS,
+    BigQueryRepository,
+    TableSpec,
+)
 from extract.parsers.datago_parser import process_shipment
 from extract.parsers.kamis_parser import clean, process_price_json, process_yearly_json
 from extract.parsers.kasi_parser import process_special_day
@@ -43,6 +51,37 @@ def _concat(frames: list[pd.DataFrame]) -> pd.DataFrame:
     """비어있지 않은 DataFrame 만 이어붙인다."""
     frames = [f for f in frames if f is not None and not f.empty]
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+
+
+def _chunk_mode(
+    repo: BigQueryRepository,
+    specs: list[TableSpec],
+    start: date,
+    end: date,
+    *,
+    mode: str,
+    first: bool = True,
+) -> str:
+    """청크 하나를 적재할 때 쓸 write mode를 정한다. 적재 직전에 부른다.
+
+    - replace_range : 이 청크의 날짜 구간만 지우고 "append"
+    - replace       : 첫 청크만 테이블 교체, 이후 "append"
+    - append        : 그대로
+
+    replace_range 에 첫 청크 특례가 없는 게 replace 와 다른 점이다. 청크마다
+    제 구간만 지우므로 앞 청크가 지워질 일이 없다.
+
+    반드시 '수집이 끝나고 적재하기 직전'에 불러야 한다. 요청 구간 전체를
+    미리 지워두면 수집이 중간에 끊길 때(datago 는 일일한도 429 로 자주
+    끊긴다) 지운 구간이 빈 채로 남는다 — 부분 적재보다 나쁜 상태다.
+    청크 단위로 지우면 실패해도 아직 손대지 않은 뒷구간은 온전하다.
+    """
+    if mode != REPLACE_RANGE:
+        return mode if first else "append"
+
+    for spec in specs:
+        repo.delete_range(spec, start, end)
+    return "append"
 
 
 # ── 개별 파이프라인 (items 를 순회) ──────────────────────────
@@ -95,9 +134,14 @@ def run_wholesale(
     *,
     mode: str = "append",
     product_cls_code: str = "01",
+    clear_range: tuple[date, date] | None = None,
     **date_kwargs,   # p_startday / p_endday 오버라이드용
 ) -> dict[str, int]:
-    """일별 도매가 → kamis_wholesale_obs / kamis_wholesale_agg."""
+    """일별 도매가 → kamis_wholesale_obs / kamis_wholesale_agg.
+
+    clear_range 는 mode="replace_range" 일 때 지울 (시작일, 종료일) 이다.
+    수집이 다 끝난 뒤에 지우므로 수집 실패 시 기존 데이터가 보존된다.
+    """
     buckets: dict[str, list[pd.DataFrame]] = {"관측치": [], "전체평균": [], "평년기준선": []}
     for it in items:
         resp = kamis.get_period_wholesale_product_list(
@@ -111,6 +155,25 @@ def run_wholesale(
         for key, bucket in buckets.items():
             bucket.append(parts[key])
     merged = {key: _concat(bucket) for key, bucket in buckets.items()}
+
+    if mode == REPLACE_RANGE:
+        if clear_range is None:
+            raise ValueError(
+                "mode='replace_range' 에는 지울 구간(clear_range)이 필요하다. "
+                "구간을 모르면 무엇을 지워야 할지 알 수 없다."
+            )
+        if merged["관측치"].empty:
+            # 0행이 '그날 장이 없었다'인지 '수집이 실패했다'인지 여기서는
+            # 구분할 수 없다. 지우고 아무것도 안 넣느니 기존 데이터를 남긴다.
+            logging.warning(
+                f"  wholesale {clear_range[0]}~{clear_range[1]}: 관측치 0행 → "
+                "삭제·적재 모두 건너뜀(기존 데이터 보존)"
+            )
+            return {WHOLESALE_OBS.name: 0, WHOLESALE_AGG.name: 0}
+        mode = _chunk_mode(
+            repo, [WHOLESALE_OBS, WHOLESALE_AGG], *clear_range, mode=mode
+        )
+
     return repo.save_wholesale(merged, mode)
 
 
@@ -144,6 +207,9 @@ def run_wholesale_backfill(
     연 단위로 끊어 수집·적재한다. replace 모드는 첫 해만 테이블을 교체하고
     이후는 append 로 이어 붙인다(run_shipment 과 같은 사상). 해마다 적재해서
     중간에 끊겨도 그때까지는 남는다.
+
+    replace_range 모드는 해마다 그 해 구간만 지우고 다시 넣는다. 첫 해
+    특례가 없어서 요청 구간 밖의 데이터는 건드리지 않는다.
     """
     totals: dict[str, int] = {}
     first = True
@@ -151,8 +217,9 @@ def run_wholesale_backfill(
         logging.info(f"=== wholesale 백필 {s} ~ {e} ===")
         res = run_wholesale(
             kamis, repo, items,
-            mode=mode if first else "append",
+            mode=mode if (first or mode == REPLACE_RANGE) else "append",
             product_cls_code=product_cls_code,
+            clear_range=(date.fromisoformat(s), date.fromisoformat(e)),
             p_startday=s, p_endday=e,
         )
         first = False
@@ -246,7 +313,15 @@ def run_weather(
             df = process_weather(rows)
             logging.info(f"  weather {s[:4]} {st.stn_name}({st.stn_id}): {len(df):,}행")
             frames.append(df)
-        n = repo.save_weather(_concat(frames), mode if first else "append")
+        merged = _concat(frames)
+        if merged.empty:
+            # 0행이 수집 실패일 수 있어 지우지 않는다(run_wholesale 과 같은 사상).
+            # first 도 그대로 둔다 — replace 모드에서 빈 첫 해 때문에 테이블
+            # 교체가 건너뛰어지면 그 뒤는 전부 append 라 옛 데이터가 남는다.
+            logging.warning(f"  weather {s[:4]}: 0행 → 건너뜀(기존 데이터 보존)")
+            continue
+        m = _chunk_mode(repo, [WEATHER], ys, ye, mode=mode, first=first)
+        n = repo.save_weather(merged, m)
         first = False
         total += n
 
@@ -278,19 +353,34 @@ def run_shipment(
     메모리·재개 안정성을 위해 '월' 단위로 모아 적재(flush)한다.
     replace 모드는 첫 flush 만 테이블을 교체(WRITE_TRUNCATE)하고, 이후
     월은 append 로 이어 붙인다(월별 truncate 로 앞 데이터가 지워지지 않게).
+
+    replace_range 모드는 flush 마다 그 달이 실제로 수집한 날짜 구간만 지우고
+    넣는다. 같은 구간을 다시 돌려도 중복이 안 쌓이고, 부분 적재로 남은
+    날짜를 손으로 지울 필요가 없다.
     """
     total = 0
     frames: list[pd.DataFrame] = []
     cur_month: tuple[int, int] | None = None
+    # 이번 flush 가 실제로 수집한 날짜 범위. 달 전체가 아니라 요청 구간과
+    # 겹치는 부분만이라, replace_range 가 요청하지 않은 날짜까지 지우지 않는다
+    # (2025-07-24~30 을 재수집해도 7월 1~23일은 그대로 남는다).
+    chunk_start: date | None = None
+    chunk_end: date | None = None
     first_flush = True
 
     def flush() -> int:
-        nonlocal frames, first_flush
-        if not frames:
-            return 0
+        nonlocal frames, first_flush, chunk_start, chunk_end
         merged = _concat(frames)
+        span_start, span_end = chunk_start, chunk_end
         frames = []
-        m = mode if first_flush else "append"
+        chunk_start = chunk_end = None
+
+        if merged.empty or span_start is None:
+            # 한 달이 통째로 0행이면 수집 실패일 수 있다(휴장과 구분 불가).
+            # 지우지도 first_flush 를 소모하지도 않고 기존 데이터를 남긴다.
+            return 0
+
+        m = _chunk_mode(repo, [SHIPMENT], span_start, span_end, mode=mode, first=first_flush)
         first_flush = False
         return repo.save_shipment(merged, m)
 
@@ -299,6 +389,9 @@ def run_shipment(
         if cur_month is not None and ym != cur_month:
             total += flush()
         cur_month = ym
+        if chunk_start is None:
+            chunk_start = d
+        chunk_end = d
 
         ymd = d.strftime("%Y%m%d")
         day_rows = 0
@@ -422,6 +515,32 @@ def run_mafra(*, mode: str = "replace") -> int:
     n = repo.save_contract(df, mode)
     logging.info(f"=== MAFRA 완료: {n:,}행 적재 ({mode}) ===")
     return n
+
+
+# ── replace_range 대상 ───────────────────────────────────────
+# --source 이름 → 그 소스가 구간 삭제로 건드리는 테이블.
+# 여기 없는 소스(mafra/holiday)는 날짜 구간 개념이 없는 전량 스냅샷이라
+# replace 가 맞고, kamis(monthly/yearly)는 구간 재수집 자체를 안 한다.
+RANGE_SPECS: dict[str, list[TableSpec]] = {
+    "datago": [SHIPMENT],
+    "weather": [WEATHER],
+    "backfill": [WHOLESALE_OBS, WHOLESALE_AGG],
+}
+
+
+def preview_range(source: str, start: date, end: date) -> dict[str, int]:
+    """--replace-range 가 지울 행 수를 세어만 본다(삭제·수집 없음).
+
+    지우기 전에 대상 규모를 눈으로 확인하는 용도다. 날짜를 잘못 넣으면
+    100만 행짜리 테이블이 날아가므로 실행 전에 한 번 볼 수 있어야 한다.
+    """
+    repo = BigQueryRepository()
+    counts = {
+        spec.name: repo.delete_range(spec, start, end, dry_run=True)
+        for spec in RANGE_SPECS[source]
+    }
+    logging.info(f"=== dry-run: {source} {start}~{end} 삭제 예정 {counts} ===")
+    return counts
 
 
 # 이름 → 파이프라인 (CLI 대상 선택용)

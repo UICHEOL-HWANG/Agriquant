@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
 
 import pandas as pd
+from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 
 from extract.config.items import ItemTarget
@@ -40,6 +42,17 @@ _WRITE_MODE = {
     "append": bigquery.WriteDisposition.WRITE_APPEND,     # 이어 쌓기(기본)
     "replace": bigquery.WriteDisposition.WRITE_TRUNCATE,  # 테이블 통째 교체
 }
+
+# 세 번째 모드: 날짜 구간만 지우고 그 구간을 다시 append.
+#
+# write_disposition 이 아니라서 _WRITE_MODE 에 없다. BigQuery 적재 잡 하나로는
+# 표현이 안 되고 'DELETE → LOAD' 두 단계라, 파이프라인이 delete_range() 를
+# 부른 뒤 append 로 바꿔 넘기는 식으로 푼다(pipelines._chunk_mode).
+#
+# append 는 같은 구간을 다시 돌리면 중복이 쌓이고, replace 는 테이블을 통째로
+# 날려서 요청 구간 밖까지 없앤다. 둘 사이가 비어 있어 그동안 '재수집하려면
+# 콘솔에서 손으로 DELETE' 를 해야 했다.
+REPLACE_RANGE = "replace_range"
 
 
 class BigQueryRepository:
@@ -109,9 +122,74 @@ class BigQueryRepository:
                 logging.warning(f"[item_code] '{miss}' 품목을 테이블에서 찾지 못함")
         return targets
 
+    # ── 구간 삭제 (멱등 재적재용) ────────────────────────────
+    def delete_range(
+        self, spec: TableSpec, start: date, end: date, *, dry_run: bool = False
+    ) -> int:
+        """spec 테이블에서 [start, end] 구간 행을 지운다. 지운 행 수 반환.
+
+        같은 구간을 다시 수집해 append 하기 직전에 부르는 용도다. 삭제와
+        적재 사이가 벌어질수록 그 사이 실패가 구간을 빈 채로 남기므로,
+        호출부는 청크(월·연) 단위로 '지우고 바로 적재'를 반복해야 한다.
+
+        dry_run 이면 DELETE 대신 COUNT(*) 만 세서 '지워질 행 수'를 돌려준다.
+
+        파티션 필드가 없는 테이블은 거부한다. 그런 테이블(kasi_special_day)은
+        애초에 전량 스냅샷이라 replace 가 맞고, 날짜 구간이라는 개념이 없다.
+        """
+        if not spec.partition_field:
+            raise ValueError(
+                f"{spec.name} 은 파티션(날짜) 필드가 없어 구간 삭제를 쓸 수 없다. "
+                "전량 스냅샷 테이블이라면 mode='replace' 를 쓸 것."
+            )
+        if start > end:
+            raise ValueError(f"구간이 뒤집혔다: start={start} > end={end}")
+
+        table_id = self.conn.table_id(spec.name)
+        # 필드명은 TableSpec 코드 상수라 식별자로 직접 넣고, 날짜는 사용자
+        # 입력이라 쿼리 파라미터로 바인딩한다(문자열 조립 금지).
+        where = f"WHERE `{spec.partition_field}` BETWEEN @start AND @end"
+        sql = (
+            f"SELECT COUNT(*) AS n FROM `{table_id}` {where}"
+            if dry_run
+            else f"DELETE FROM `{table_id}` {where}"
+        )
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("start", "DATE", start),
+                bigquery.ScalarQueryParameter("end", "DATE", end),
+            ]
+        )
+
+        try:
+            job = self.conn.client.query(sql, job_config=job_config)
+            rows = job.result()
+        except NotFound:
+            # 최초 적재라 테이블이 아직 없는 경우. 지울 게 없으니 정상이다.
+            logging.info(f"[BigQuery] {spec.name}: 테이블 없음 → 삭제 건너뜀")
+            return 0
+
+        if dry_run:
+            n = next(iter(rows)).n
+            logging.info(f"[BigQuery] {spec.name}: {start}~{end} {n:,}행 삭제 예정(dry-run)")
+            return n
+
+        n = job.num_dml_affected_rows or 0
+        logging.info(f"[BigQuery] {spec.name}: {start}~{end} {n:,}행 삭제")
+        return n
+
     # ── 범용 저장 ────────────────────────────────────────────
     def save(self, df: pd.DataFrame | None, spec: TableSpec, mode: str = "append") -> int:
         """DataFrame 하나를 spec 테이블에 적재. 적재 행 수 반환."""
+        if mode not in _WRITE_MODE:
+            # REPLACE_RANGE 가 여기까지 왔다면 호출부가 delete_range 를 부르고
+            # append 로 바꿔주는 단계를 빠뜨린 것이다. 그대로 두면 구간 삭제
+            # 없이 중복이 쌓이므로 조용히 넘기지 않는다.
+            raise ValueError(
+                f"{spec.name}: 알 수 없는 적재 모드 '{mode}'. "
+                f"가능한 값: {sorted(_WRITE_MODE)} "
+                f"('{REPLACE_RANGE}' 는 delete_range() 후 'append' 로 바꿔 넘길 것)"
+            )
         if df is None or df.empty:
             logging.info(f"[BigQuery] {spec.name}: 빈 DataFrame → 건너뜀")
             return 0

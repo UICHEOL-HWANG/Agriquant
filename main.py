@@ -13,6 +13,15 @@
 #   python main.py --source datago --start 2025-01-01 --end 2025-12-31
 #   python main.py --source datago --replace     # 테이블 교체
 #
+# 구간 재수집(--replace-range) — datago / weather / backfill 전용:
+#   python main.py --source datago --start 2025-07-24 --end 2025-07-30 \
+#       --replace-range --dry-run   # 먼저 지워질 행 수만 확인
+#   python main.py --source datago --start 2025-07-24 --end 2025-07-30 \
+#       --replace-range             # 그 구간만 지우고 다시 적재
+#   같은 구간을 몇 번을 다시 돌려도 중복이 안 쌓인다. 부분 적재로 남은
+#   날짜를 콘솔에서 손으로 DELETE 할 필요가 없어진다.
+#   구간 밖은 건드리지 않는다(--replace 와 다른 점). --start/--end 필수.
+#
 # mafra(농협계약재배) 사용법:
 #   python main.py --source mafra                # 전량 스냅샷 재적재(replace)
 #
@@ -49,7 +58,10 @@
 import argparse
 from datetime import date
 
+from extract.database import REPLACE_RANGE
 from extract.pipelines import (
+    RANGE_SPECS,
+    preview_range,
     run_all,
     run_datago,
     run_holiday,
@@ -85,10 +97,24 @@ if __name__ == "__main__":
         help="[backfill/weather/holiday] 최근 몇 개 연도를 받을지. "
              "기본 5(= 2021-01-01~오늘). --start/--end 지정 시 무시",
     )
-    parser.add_argument(
+    # --replace 와 --replace-range 는 동시에 못 준다. 둘 다 '기존 행을 지운다'
+    # 인데 지우는 범위가 정반대(테이블 전체 vs 요청 구간)라 조합이 무의미하다.
+    write_mode = parser.add_mutually_exclusive_group()
+    write_mode.add_argument(
         "--replace",
         action="store_true",
         help="테이블을 통째로 교체(WRITE_TRUNCATE). 생략 시 이어 쌓기(append)",
+    )
+    write_mode.add_argument(
+        "--replace-range",
+        action="store_true",
+        help="[datago/weather/backfill] --start~--end 구간만 지우고 다시 적재. "
+             "같은 구간을 다시 돌려도 중복이 안 쌓인다. --start/--end 필수",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="[--replace-range] 지우지 않고 '지워질 행 수'만 세어 본다",
     )
     parser.add_argument(
         "--items",
@@ -116,7 +142,30 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    mode = "replace" if args.replace else "append"
+    if args.replace_range:
+        # 구간 삭제는 되돌릴 수 없다. --years/--days 로 계산된 기본 구간이
+        # 조용히 잡혀 엉뚱한 데이터가 날아가는 일이 없도록, 양 끝 날짜를
+        # 반드시 손으로 명시하게 한다.
+        if args.source not in RANGE_SPECS:
+            parser.error(
+                f"--replace-range 는 {sorted(RANGE_SPECS)} 에서만 쓸 수 있다. "
+                f"--source {args.source} 는 날짜 구간으로 지울 대상이 아니다"
+            )
+        if args.start is None or args.end is None:
+            parser.error("--replace-range 에는 --start 와 --end 를 모두 지정해야 한다")
+        if args.start > args.end:
+            parser.error(f"구간이 뒤집혔다: --start {args.start} > --end {args.end}")
+        mode = REPLACE_RANGE
+    elif args.replace:
+        mode = "replace"
+    else:
+        mode = "append"
+
+    if args.dry_run:
+        if mode != REPLACE_RANGE:
+            parser.error("--dry-run 은 --replace-range 와 함께 쓴다")
+        preview_range(args.source, args.start, args.end)
+        raise SystemExit(0)
 
     if args.source == "transform":
         # 수집이 아니라 이미 적재된 원천을 뷰로 잇는 단계. mode/기간 인자는 안 쓴다.

@@ -12,11 +12,12 @@ from .models import (
     YEARLY_PRICE,
     TableSpec,
 )
-from .repository import BigQueryRepository
+from .repository import REPLACE_RANGE, BigQueryRepository
 
 __all__ = [
     "BigQueryConnection",
     "BigQueryRepository",
+    "REPLACE_RANGE",
     "TableSpec",
     "MONTHLY_PRICE",
     "YEARLY_PRICE",
