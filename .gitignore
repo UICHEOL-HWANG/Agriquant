@@ -22,3 +22,7 @@ wheels/
 
 # 노트북 체크포인트
 .ipynb_checkpoints/
+
+# 노트북 로컬 캐시 — mart_item_daily 는 뷰라서 조회할 때마다 datago_shipment
+# 284MB 를 다시 스캔한다. 셀을 돌릴 때마다 쿼리하지 않도록 parquet 로 받아둔다.
+notebooks/.cache/
