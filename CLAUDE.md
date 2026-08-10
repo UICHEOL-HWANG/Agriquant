@@ -10,6 +10,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 를 먼저 읽고 그 규칙을 따른다.** 이 CLAUDE.md 는 '저장소가 어떻게 동작하는가'이고,
 그쪽은 '분석을 어떻게 진행하는가'다.
 
+**분석을 이어서 할 때는 [docs/analysis-status.md](docs/analysis-status.md) 도
+같이 읽는다.** 지금까지 무엇을 알아냈고 무엇이 이미 반증됐는지, 다음에 뭘 할지가
+거기 있다. 특히 '반복하지 말 것' 절을 먼저 보면 같은 실험을 되풀이하지 않는다.
+
 특히 지켜야 할 것:
 
 - **쿼리는 항상 보여주고 설명한 뒤 실행한다.** 조용히 돌리고 결과만 던지지 않는다.
