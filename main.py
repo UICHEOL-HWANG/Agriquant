@@ -13,6 +13,18 @@
 #   python main.py --source datago --start 2025-01-01 --end 2025-12-31
 #   python main.py --source datago --replace     # 테이블 교체
 #
+#   신규 품목 백필 — --items 로 품목을 좁힌다:
+#     python main.py --source datago --items 상추 얼갈이배추 풋고추 \
+#         --start 2021-01-01 --end 2021-12-31
+#   일일한도가 1만이라 (품목수 x 일수) 가 그 아래가 되게 연 단위로 끊는다.
+#   3품목이면 1년치가 약 1,100건이라 하루에 여러 해를 돌릴 수 있다.
+#
+#   !! 신규 품목에 --replace-range 를 쓰지 말 것.
+#      delete_range 는 날짜 구간만 보고 품목을 안 가린다. 신규 품목만 받으려
+#      했는데 그 구간의 기존 품목까지 통째로 지워지고, 다시 채우려면 전
+#      품목을 재수집해야 해서 일일한도에 걸려 구간이 빈 채로 남는다.
+#      신규 품목은 반드시 append(기본값)로 돌린다.
+#
 # 구간 재수집(--replace-range) — datago / weather / backfill 전용:
 #   python main.py --source datago --start 2025-07-24 --end 2025-07-30 \
 #       --replace-range --dry-run   # 먼저 지워질 행 수만 확인
@@ -58,6 +70,7 @@
 import argparse
 from datetime import date
 
+from extract.config.items import DATAGO_VEGETABLES
 from extract.database import REPLACE_RANGE
 from extract.pipelines import (
     RANGE_SPECS,
@@ -120,7 +133,9 @@ if __name__ == "__main__":
         "--items",
         nargs="*",
         metavar="품목명",
-        help="[kamis] 수집할 품목명 (예: 배추 무 당근). 생략 시 기본 채소 목록",
+        help="[kamis/backfill/datago] 수집할 품목명 (예: 배추 무 당근). "
+             "생략 시 기본 목록 전체. datago 는 DATAGO_VEGETABLES 의 "
+             "item_name 과 정확히 일치해야 한다(대파는 '파'가 아니라 '대파')",
     )
     parser.add_argument(
         "--days",
@@ -171,7 +186,26 @@ if __name__ == "__main__":
         # 수집이 아니라 이미 적재된 원천을 뷰로 잇는 단계. mode/기간 인자는 안 쓴다.
         build_all()
     elif args.source == "datago":
-        run_datago(start=args.start, end=args.end, days=args.days, mode=mode)
+        # --items 로 품목을 좁힐 수 있다. 신규 품목을 붙일 때 기존 품목까지
+        # 다시 받으면 일일한도(1만)를 넘겨 중간에 끊기므로, 새로 추가한
+        # 품목만 골라 append 로 돌리는 게 기본 작업 방식이다.
+        targets = None
+        if args.items:
+            want = set(args.items)
+            targets = [t for t in DATAGO_VEGETABLES if t.item_name in want]
+            missing = want - {t.item_name for t in targets}
+            if missing:
+                parser.error(
+                    f"DATAGO_VEGETABLES 에 없는 품목: {sorted(missing)}. "
+                    f"쓸 수 있는 이름: {[t.item_name for t in DATAGO_VEGETABLES]}"
+                )
+        run_datago(
+            targets=targets,
+            start=args.start,
+            end=args.end,
+            days=args.days,
+            mode=mode,
+        )
     elif args.source == "mafra":
         # 전량 스냅샷이라 append 는 중복 적재 위험 → 항상 replace.
         run_mafra(mode="replace")
