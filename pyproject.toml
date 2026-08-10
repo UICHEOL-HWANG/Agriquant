@@ -25,3 +25,12 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 # main.py 는 패키지가 아니라 실행 스크립트라 넣지 않는다.
 packages = ["extract", "transform"]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
+    "jupyterlab>=4.6.2",
+    "matplotlib>=3.11.1",
+    "scikit-learn>=1.9.0",
+    "seaborn>=0.13.2",
+]
