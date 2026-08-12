@@ -64,8 +64,8 @@ function header(d) {
 
 // 내부 용어를 사람 말로. 사이트에 처음 온 사람은 "미룸"이 뭔지 알 수 없다.
 const ACTION = {
-  "미룸": { label: "열흘 뒤에 파세요", why: "오를 것 같습니다", cls: "up" },
-  "오늘 판매": { label: "오늘 파세요", why: "내릴 것 같습니다", cls: "down" },
+  "미룸": { label: "열흘 뒤에 파세요", why: "가격이 오를 것 같습니다", cls: "up" },
+  "오늘 판매": { label: "오늘 파세요", why: "가격이 내릴 것 같습니다", cls: "down" },
 };
 
 function signals(d) {
