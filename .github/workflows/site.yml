@@ -1,0 +1,73 @@
+# docs/data.json 을 매일 갱신한다. GitHub Pages 가 docs/ 를 서빙하므로
+# 이 커밋이 곧 사이트 갱신이다.
+#
+# 평일 18:30 KST 에 돈다. Cloud Run Job 이 18:00 에 예측을 적재하므로
+# 30분 뒤에 읽는다. 잡이 늦어져도 다음 날 다시 잡히니 치명적이지 않다.
+#
+# **키를 쓰지 않는다.** Workload Identity Federation 으로 GCP 를 읽으며,
+# 그쪽 공급자에 `assertion.repository=='UICHEOL-HWANG/Agriquant'` 조건이
+# 걸려 있어 다른 저장소는 이 계정을 가장할 수 없다.
+#
+# 계정은 읽기 전용(`bigquery.dataViewer`)이다. 수집·적재를 하는
+# `agriquant-daily`(dataEditor)와 일부러 분리했다 — 사이트 빌드가
+# 데이터를 건드릴 이유가 없다.
+
+name: site
+
+on:
+  schedule:
+    - cron: "30 9 * * 1-5"    # 09:30 UTC = 18:30 KST, 평일
+  workflow_dispatch:           # 손으로도 돌릴 수 있게
+  push:
+    branches: [main]
+    paths:
+      - "site/build.py"        # 빌더를 고치면 바로 반영
+      - ".github/workflows/site.yml"
+
+concurrency:
+  group: site
+  cancel-in-progress: false    # 커밋이 겹치지 않게 순서대로
+
+permissions:
+  contents: write              # data.json 커밋
+  id-token: write              # WIF 토큰 발급
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          project_id: agriquant
+          workload_identity_provider: projects/1003103780622/locations/global/workloadIdentityPools/github/providers/github
+          service_account: agriquant-site@agriquant.iam.gserviceaccount.com
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: 의존성
+        run: uv sync --frozen --no-dev
+
+      - name: data.json 생성
+        env:
+          TZ: Asia/Seoul       # build.py 가 KST 로 시각을 찍는다
+        run: uv run python site/build.py
+
+      - name: 바뀐 게 있으면 커밋
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/data.json; then
+            echo "변경 없음 — 커밋 건너뜀"
+            exit 0
+          fi
+          AS_OF=$(uv run python -c "import json;print(json.load(open('docs/data.json'))['as_of'])")
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/data.json
+          # 이 커밋의 타임스탬프가 "결과를 알기 전에 예측했다"는 증거가 된다.
+          git commit -m "사이트 데이터 갱신: ${AS_OF} 기준"
+          git push

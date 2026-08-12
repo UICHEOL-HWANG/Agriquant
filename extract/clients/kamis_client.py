@@ -12,12 +12,24 @@ class KamisClient(BaseClient):
 
     # 일별 품목별 도매 가격자료(기간설정가능, 최대1년)
     def get_period_wholesale_product_list(self,
-                                    p_startday: str = "2025-01-01",
-                                    p_endday: str =  "2026-01-01",
+                                    *,
+                                    p_startday: str,
+                                    p_endday: str,
                                     category_code: str = "200",
                                     p_itemcode: str = "211",
                                     product_cls_code: str = "01",
                                     ) -> dict:
+        """일별 도매가. 날짜는 `YYYY-MM-DD` 이고 **기본값이 없다.**
+
+        예전엔 `2025-01-01`~`2026-01-01` 이 박혀 있었다. 날짜를 안 넘기는
+        호출(`run_all` 이 그랬다)이 조용히 2025년 1년치를 받아 append 로
+        쌓는 사고로 이어진다. 기본값을 없애 그런 호출이 즉시 TypeError 로
+        드러나게 한다.
+
+        **이 API 는 요청 구간보다 넓게 돌려준다**(2026-08-11 실측: 하루를
+        요청했는데 2026-04~08 이 왔다). 받은 쪽에서 잘라야 하며,
+        `pipelines.run_wholesale` 이 그 일을 한다.
+        """
         params = {
             "action" : "periodWholesaleProductList",
             "p_cert_key": self.cert_key,

@@ -1,0 +1,30 @@
+# 빌드 컨텍스트에서 뺄 것. Dockerfile 이 COPY 로 필요한 것만 고르지만,
+# 여기서 한 번 더 막는다 — 컨텍스트에 없으면 실수로 COPY 할 수도 없다.
+
+# 인증정보 — 절대 이미지에 들어가면 안 된다.
+# 비밀은 Secret Manager 로 런타임에 주입한다(KAMIS_CERT_KEY/ID).
+.env
+*.env
+extract/.env
+
+# 로컬 환경
+.venv
+__pycache__/
+*.py[oc]
+*.egg-info
+.python-version
+
+# 분석 자산 — 컨테이너는 수집·추론만 한다
+notebooks/
+docs/
+logs/
+
+# 버전 관리·편집기·OS
+.git
+.gitignore
+.dockerignore
+.claude
+.idea/
+.vscode/
+.DS_Store
+.ipynb_checkpoints/

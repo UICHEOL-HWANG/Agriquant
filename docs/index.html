@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agriquant — 농산물 도매가 방향 예측</title>
+<meta name="description" content="7거래일 뒤 농산물 도매가의 방향을 예측하고, 그 성적을 매일 기록합니다.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>agriquant</h1>
+  <p class="sub">농산물 도매가의 <strong>7거래일 뒤 방향</strong>을 맞히고,
+     그 성적을 매일 기록합니다.</p>
+  <p class="meta">
+    <span id="freshness" class="badge">데이터 확인 중</span>
+    <span id="generated"></span>
+    <a href="https://github.com/UICHEOL-HWANG/Agriquant">GitHub</a>
+  </p>
+</header>
+
+<main>
+
+<!-- (1) 오늘의 신호 -->
+<section id="today">
+  <h2>오늘의 신호</h2>
+  <p class="lead">
+    모델이 <strong>확신하는 날</strong>만 행동합니다. 나머지는 평소대로 팝니다.
+  </p>
+
+  <div class="cards" id="action-cards"></div>
+
+  <details id="holdBox">
+    <summary>판단 보류 <span id="hold-count"></span></summary>
+    <div id="hold-list" class="hold"></div>
+  </details>
+
+  <h3>신호는 계절을 탑니다</h3>
+  <p class="note">
+    확신하는 날이 여름에 몰리고, 그때는 대부분 "미루라"고 말합니다.
+  </p>
+  <div class="chart" id="chart-month"></div>
+
+  <p class="warn">
+    참고용입니다. 이 신호는 <strong>확률</strong>이지 확정이 아니며,
+    실전 검증은 아직 진행 중입니다. 출하 결정의 책임은 이 사이트에 없습니다.
+  </p>
+</section>
+
+<!-- (2) 성적표 -->
+<section id="score">
+  <h2>성적표</h2>
+  <p class="lead">
+    백테스트는 과거로 잰 값이고, <strong>실전</strong>은 결과를 알기 전에
+    기록한 예측을 나중에 채점한 값입니다.
+    <strong>후자만이 진짜 증거입니다.</strong>
+  </p>
+
+  <table class="score">
+    <thead>
+      <tr><th></th><th>백테스트</th><th>실전</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>적중률</th>
+          <td id="bt-acc">—</td><td id="lv-acc" class="live">—</td></tr>
+      <tr><th>확신한 날 적중률</th>
+          <td id="bt-cacc">—</td><td id="lv-cacc" class="live">—</td></tr>
+      <tr><th>표본</th>
+          <td id="bt-n">—</td><td id="lv-n" class="live">—</td></tr>
+    </tbody>
+  </table>
+  <p class="note" id="score-note"></p>
+
+  <h3>누적 적중률</h3>
+  <div class="chart" id="chart-cum"></div>
+
+  <h3>얼마나 골라야 하나</h3>
+  <p class="note">
+    적게 고를수록 잘 맞히지만 행동할 날이 줄어듭니다.
+    운영 지점은 확신도 <strong>0.20</strong> 입니다.
+  </p>
+  <div class="chart" id="chart-conf"></div>
+</section>
+
+<!-- (3) 한계 -->
+<section id="limits">
+  <h2>무엇을 못하는가</h2>
+  <p class="lead">
+    이 프로젝트에서 가장 많은 시간을 쓴 건 <strong>안 되는 것을 확인하는 일</strong>
+    이었습니다.
+  </p>
+
+  <div class="limit-grid">
+    <div>
+      <h3>값은 못 맞힙니다</h3>
+      <p>몇 % 오를지는 예측하지 못합니다. 맞히는 것은 <strong>방향뿐</strong>입니다.
+         변화율 예측은 naive("안 변한다") 대비 개선이 미미했습니다.</p>
+    </div>
+    <div>
+      <h3>시기를 많이 탑니다</h3>
+      <p>반년 단위로 갈라 재면 적중률이 <strong>11%p</strong> 벌어집니다.
+         모델을 바꾸는 것보다 시기가 훨씬 큽니다.
+         한 달 성적으로는 판단이 서지 않습니다.</p>
+    </div>
+    <div>
+      <h3>피처를 더 넣어도 안 늘었습니다</h3>
+      <p>출하량·기상을 붙였다 뗐고, 앙상블·확률 보정·다른 모델 계열도
+         전부 <strong>노이즈 범위</strong>였습니다. 지금 피처로는 여기가 한계입니다.</p>
+    </div>
+    <div>
+      <h3>작은 차이는 발견이 아닙니다</h3>
+      <p>무의미한 피처를 넣고 값을 흔들어 <strong>잡음의 폭</strong>을 먼저 쟀습니다.
+         그보다 작은 개선은 채택하지 않았습니다.</p>
+    </div>
+  </div>
+
+  <h3>반년마다 이만큼 흔들립니다</h3>
+  <div class="chart" id="chart-fold"></div>
+</section>
+
+<footer>
+  <p>
+    수집 5개 공공 API → BigQuery → 일별 마트 → 방향 예측.
+    평일 18시(KST)에 Cloud Run Job 이 돌고, 예측은 되돌릴 수 없게 적재됩니다.
+  </p>
+  <p class="muted">
+    <span id="mart-info"></span> ·
+    <a href="analysis-status.md">분석 기록</a> ·
+    <a href="analysis-guide.md">작업 규칙</a>
+  </p>
+</footer>
+
+</main>
+
+<script src="vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

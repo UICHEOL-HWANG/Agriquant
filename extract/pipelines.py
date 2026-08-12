@@ -127,33 +127,77 @@ def run_yearly(
     return repo.save_yearly(_concat(frames), mode)
 
 
+def _clip_to_range(parts: dict[str, pd.DataFrame], start: str, end: str
+                   ) -> tuple[dict[str, pd.DataFrame], int]:
+    """응답 행을 [start, end] 로 자른다. (자른 결과, 버린 행 수) 를 준다.
+
+    **KAMIS 가 요청보다 넓게 주기 때문에 반드시 거쳐야 한다.** 이걸 빼면
+    append 는 넓게 온 만큼 중복이 쌓이고, replace_range 는 요청 구간만
+    지우고 넓게 적재해 구간 밖에 중복을 남긴다. 어느 모드로도 안전하지 않다.
+
+    자기가 요청한 범위를 믿고 그 밖은 버린다. 원천이 무엇을 더 주든
+    적재되는 것은 요청한 구간뿐이다.
+    """
+    s, e = pd.Timestamp(start), pd.Timestamp(end)
+    out, dropped = {}, 0
+    for key, df in parts.items():
+        if df.empty or "날짜" not in df.columns:
+            out[key] = df
+            continue
+        d = pd.to_datetime(df["날짜"])
+        keep = (d >= s) & (d <= e)
+        dropped += int((~keep).sum())
+        out[key] = df[keep]
+    return out, dropped
+
+
 def run_wholesale(
     kamis: KamisClient,
     repo: BigQueryRepository,
     items: list[ItemTarget],
     *,
+    p_startday: str,
+    p_endday: str,
     mode: str = "append",
     product_cls_code: str = "01",
     clear_range: tuple[date, date] | None = None,
-    **date_kwargs,   # p_startday / p_endday 오버라이드용
 ) -> dict[str, int]:
     """일별 도매가 → kamis_wholesale_obs / kamis_wholesale_agg.
+
+    p_startday/p_endday 는 `YYYY-MM-DD` 이고 **필수다.** 예전엔 선택이라
+    안 넘기면 클라이언트에 박힌 2025-01-01~2026-01-01 이 쓰였고, 그걸
+    모른 채 append 로 돌면 1년치가 통째로 중복됐다.
+
+    **받은 행은 요청 구간으로 자른다**(`_clip_to_range`). 원천이 넓게
+    돌려주기 때문이다.
 
     clear_range 는 mode="replace_range" 일 때 지울 (시작일, 종료일) 이다.
     수집이 다 끝난 뒤에 지우므로 수집 실패 시 기존 데이터가 보존된다.
     """
     buckets: dict[str, list[pd.DataFrame]] = {"관측치": [], "전체평균": [], "평년기준선": []}
+    dropped_total = 0
     for it in items:
         resp = kamis.get_period_wholesale_product_list(
+            p_startday=p_startday,
+            p_endday=p_endday,
             category_code=it.category_code,
             p_itemcode=it.item_code,
             product_cls_code=product_cls_code,
-            **date_kwargs,
         )
-        parts = clean(resp)
-        logging.info(f"  wholesale {it.item_name}({it.item_code}): 관측치 {len(parts['관측치']):,}행")
+        parts, dropped = _clip_to_range(clean(resp), p_startday, p_endday)
+        dropped_total += dropped
+        logging.info(
+            f"  wholesale {it.item_name}({it.item_code}): "
+            f"관측치 {len(parts['관측치']):,}행"
+            + (f" (구간 밖 {dropped:,}행 버림)" if dropped else "")
+        )
         for key, bucket in buckets.items():
             bucket.append(parts[key])
+    if dropped_total:
+        logging.info(
+            f"  → 원천이 {p_startday}~{p_endday} 밖으로 준 {dropped_total:,}행을 "
+            "버렸습니다. 정상입니다(KAMIS 는 요청보다 넓게 돌려줍니다)."
+        )
     merged = {key: _concat(bucket) for key, bucket in buckets.items()}
 
     if mode == REPLACE_RANGE:
@@ -552,17 +596,34 @@ PIPELINES = {
 
 
 # ── 통합 실행 ────────────────────────────────────────────────
+WHOLESALE_RECENT_DAYS = 7
+"""`run_all` 이 일별 도매가를 받을 때 오늘로부터 거슬러 올라갈 일수.
+
+예전엔 아무 날짜도 안 넘겨 클라이언트에 박힌 2025-01-01~2026-01-01 이
+쓰였다. 최근 8개월을 못 받으면서 2025년은 통째로 중복시키는 값이었다.
+"""
+
+
 def run_all(
     targets: list[str] | None = None,
     *,
     item_names: list[str] | None = None,
     mode: str = "append",
+    wholesale_days: int = WHOLESALE_RECENT_DAYS,
 ) -> dict:
     """대상 파이프라인(기본: 전체)을 수집 품목 전체에 대해 실행한다.
 
-    targets    : ["monthly", "yearly"] 처럼 일부만. None 이면 전체.
-    item_names : 수집할 품목명. None 이면 DEFAULT_VEGETABLES.
-    mode       : "append"(이어 쌓기) 또는 "replace"(테이블 교체).
+    targets        : ["monthly", "yearly"] 처럼 일부만. None 이면 전체.
+    item_names     : 수집할 품목명. None 이면 DEFAULT_VEGETABLES.
+    mode           : "append"(이어 쌓기) 또는 "replace"(테이블 교체).
+    wholesale_days : 일별 도매가를 며칠치 받을지(오늘부터 거슬러).
+
+    ⚠️ **`mode="append"` 로 같은 구간을 두 번 돌리면 중복이 쌓인다.**
+    `run_wholesale` 이 응답을 요청 구간으로 자르므로 원천이 넓게 줘서
+    생기는 중복은 막히지만, 같은 구간을 재실행하는 것까지 막지는 못한다.
+    **매일 돌리는 자동 수집은 멱등한 쪽을 쓸 것**:
+
+        python main.py --source backfill --start <시작> --end <끝> --replace-range
     """
     kamis = KamisClient()
     repo = BigQueryRepository()
@@ -573,11 +634,20 @@ def run_all(
         logging.warning("수집 대상 품목이 없습니다. 중단.")
         return {}
 
+    today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+    wholesale_kwargs = {
+        "p_startday": (today - timedelta(days=wholesale_days)).isoformat(),
+        "p_endday": today.isoformat(),
+    }
+
     targets = targets or list(PIPELINES)
     results: dict = {}
     for name in targets:
         logging.info(f"=== {name} 파이프라인 시작 ===")
-        results[name] = PIPELINES[name](kamis, repo, items, mode=mode)
+        extra = wholesale_kwargs if name == "wholesale" else {}
+        if extra:
+            logging.info(f"  구간 {extra['p_startday']} ~ {extra['p_endday']}")
+        results[name] = PIPELINES[name](kamis, repo, items, mode=mode, **extra)
 
     logging.info(f"=== 완료: {results} ===")
     return results

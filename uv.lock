@@ -28,6 +28,7 @@ dependencies = [
     { name = "pyarrow" },
     { name = "python-dotenv" },
     { name = "requests" },
+    { name = "scikit-learn" },
 ]
 
 [package.dev-dependencies]
@@ -48,6 +49,7 @@ requires-dist = [
     { name = "pyarrow", specifier = ">=25.0.0" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "requests", specifier = ">=2.34.2" },
+    { name = "scikit-learn", specifier = ">=1.9.0" },
 ]
 
 [package.metadata.requires-dev]
