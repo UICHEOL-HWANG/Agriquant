@@ -114,14 +114,15 @@ function scoreTable(d) {
   const note = document.getElementById("score-note");
   if (!l.scored) {
     note.innerHTML =
-      `실전 열은 아직 비어 있습니다. 예측 <strong>${NUM(l.predictions)}건</strong>을 ` +
-      `적재했고, 7거래일이 지나야 채점됩니다. ` +
+      `실제 운영 값은 아직 비어 있습니다. 예측 <strong>${NUM(l.predictions)}건</strong>을 ` +
+      `기록해 두었고, 7거래일이 지나야 채점됩니다. ` +
       `<strong>비어 있는 것이 이 표의 요점입니다</strong> — ` +
-      `백테스트만 자랑하지 않고 결과를 알기 전에 기록해 두었습니다.`;
+      `과거 검증 수치만 내세우지 않고, 결과를 알기 전에 예측을 남겨 두었습니다.`;
   } else {
     note.innerHTML =
-      `찍기 기준선은 ${PCT(b.chance, 1)} 입니다. ` +
-      `실전 ${NUM(l.scored)}건이 채점됐고 예측 ${NUM(l.predictions)}건이 쌓였습니다.`;
+      `아무렇게나 찍었을 때의 기준선은 ${PCT(b.chance, 1)} 입니다. ` +
+      `실제 운영에서 ${NUM(l.scored)}건이 채점됐고, ` +
+      `예측 ${NUM(l.predictions)}건이 쌓였습니다.`;
   }
 }
 
@@ -156,7 +157,7 @@ function chartCum(d) {
   const bt = d.backtest.accuracy;
   const mark = {
     silent: true, symbol: "none",
-    label: { formatter: `백테스트 ${bt.toFixed(2)}%`, position: "insideEndTop",
+    label: { formatter: `과거 검증 ${bt.toFixed(2)}%`, position: "insideEndTop",
              color: MUTED, fontSize: 11 },
     lineStyle: { color: MUTED, type: "dashed" },
     data: [{ yAxis: bt }],
@@ -204,7 +205,7 @@ function chartConf(d) {
   const k = d.by_confidence;
   const thr = d.backtest.threshold;
   draw("chart-conf", {
-    legend: { data: ["적중률", "행동하는 날 비중"], top: 0,
+    legend: { data: ["적중률", "신호 나온 날 비율"], top: 0,
               textStyle: { color: MUTED, fontSize: 11 } },
     xAxis: Object.assign({ type: "category",
       data: k.map((x) => x.threshold.toFixed(2)), name: "확신도 임계값",
@@ -222,7 +223,7 @@ function chartConf(d) {
           lineStyle: { color: DOWN, type: "dashed" },
           data: [{ xAxis: thr.toFixed(2) }],
         } },
-      { name: "행동하는 날 비중", type: "bar",
+      { name: "신호 나온 날 비율", type: "bar",
         data: k.map((x) => x.coverage),
         itemStyle: { color: ACCENT, opacity: 0.35, borderRadius: [3, 3, 0, 0] },
         animationDelay: (i) => i * 50 },
@@ -364,7 +365,7 @@ function chartRel(d) {
         return `모델이 말한 확률 <b>${k[i].predicted}%</b><br/>` +
                `실제로 오른 비율 <b>${k[i].actual}%</b><br/>표본 ${NUM(k[i].n)}건`;
       } },
-    legend: { data: ["실제", "완벽한 보정"], top: 0,
+    legend: { data: ["실제", "예측 = 실제"], top: 0,
               textStyle: { color: MUTED, fontSize: 11 } },
     xAxis: Object.assign({ type: "value", min: 0, max: 100,
       name: "모델이 말한 확률", nameLocation: "middle", nameGap: 26,
@@ -373,7 +374,7 @@ function chartRel(d) {
     yAxis: Object.assign({ type: "value", min: 0, max: 100,
       axisLabel: { color: MUTED, fontSize: 11, formatter: "{value}%" } }, AXIS),
     series: [
-      { name: "완벽한 보정", type: "line", data: [[0, 0], [100, 100]],
+      { name: "예측 = 실제", type: "line", data: [[0, 0], [100, 100]],
         showSymbol: false, lineStyle: { color: MUTED, type: "dashed", width: 1.4 },
         silent: true },
       { name: "실제", type: "line",
