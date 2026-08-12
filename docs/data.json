@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-12T14:25:40+09:00",
+  "generated_at": "2026-08-12T14:34:36+09:00",
   "as_of": "2026-08-11",
   "mart": {
     "rows": 24122,
@@ -156,11 +156,11 @@
     }
   ],
   "backtest": {
-    "accuracy": 63.25,
-    "confident_accuracy": 73.45,
-    "coverage": 32.01,
+    "accuracy": 63.15,
+    "confident_accuracy": 74.03,
+    "coverage": 32.14,
     "n": 13695,
-    "n_confident": 4384,
+    "n_confident": 4402,
     "threshold": 0.2,
     "chance": 49.99
   },
@@ -183,32 +183,32 @@
     },
     {
       "fold": "2023-07-01",
-      "accuracy": 58.93,
+      "accuracy": 58.46,
       "n": 1926
     },
     {
       "fold": "2024-01-01",
-      "accuracy": 62.11,
+      "accuracy": 62.06,
       "n": 1924
     },
     {
       "fold": "2024-07-01",
-      "accuracy": 68.09,
+      "accuracy": 68.3,
       "n": 1943
     },
     {
       "fold": "2025-01-01",
-      "accuracy": 63.72,
+      "accuracy": 64.25,
       "n": 1888
     },
     {
       "fold": "2025-07-01",
-      "accuracy": 65.37,
+      "accuracy": 65.22,
       "n": 1984
     },
     {
       "fold": "2026-01-01",
-      "accuracy": 66.15,
+      "accuracy": 65.49,
       "n": 2272
     }
   ],
@@ -216,78 +216,78 @@
     {
       "threshold": 0.0,
       "coverage": 100.0,
-      "accuracy": 63.25,
+      "accuracy": 63.15,
       "n": 13695
     },
     {
       "threshold": 0.05,
-      "coverage": 80.04,
-      "accuracy": 65.74,
-      "n": 10961
+      "coverage": 80.2,
+      "accuracy": 65.63,
+      "n": 10984
     },
     {
       "threshold": 0.1,
-      "coverage": 60.59,
-      "accuracy": 68.56,
-      "n": 8298
+      "coverage": 60.87,
+      "accuracy": 68.47,
+      "n": 8336
     },
     {
       "threshold": 0.15,
-      "coverage": 44.87,
-      "accuracy": 71.38,
-      "n": 6145
+      "coverage": 45.05,
+      "accuracy": 71.18,
+      "n": 6170
     },
     {
       "threshold": 0.2,
-      "coverage": 32.01,
-      "accuracy": 73.45,
-      "n": 4384
+      "coverage": 32.14,
+      "accuracy": 74.03,
+      "n": 4402
     },
     {
       "threshold": 0.25,
-      "coverage": 20.43,
-      "accuracy": 76.45,
-      "n": 2798
+      "coverage": 20.42,
+      "accuracy": 76.79,
+      "n": 2796
     },
     {
       "threshold": 0.3,
-      "coverage": 11.18,
-      "accuracy": 77.86,
-      "n": 1531
+      "coverage": 11.03,
+      "accuracy": 78.16,
+      "n": 1511
     },
     {
       "threshold": 0.35,
-      "coverage": 4.79,
-      "accuracy": 80.49,
-      "n": 656
+      "coverage": 4.71,
+      "accuracy": 79.22,
+      "n": 645
     },
     {
       "threshold": 0.4,
-      "coverage": 1.05,
-      "accuracy": 90.97,
-      "n": 144
+      "coverage": 1.01,
+      "accuracy": 89.93,
+      "n": 139
     }
   ],
   "by_month": [
     {
       "month": 1,
-      "n": 440,
+      "n": 443,
       "delay_ratio": 70.7
     },
     {
       "month": 2,
-      "n": 195,
-      "delay_ratio": 44.1
+      "n": 192,
+      "delay_ratio": 43.8
     },
     {
       "month": 3,
-      "n": 264,
-      "delay_ratio": 3.4
+      "n": 256,
+      "delay_ratio": 3.1
     },
     {
       "month": 4,
-      "n": 142,
-      "delay_ratio": 36.6
+      "n": 138,
+      "delay_ratio": 32.6
     },
     {
       "month": 5,
@@ -296,230 +296,230 @@
     },
     {
       "month": 6,
-      "n": 725,
-      "delay_ratio": 98.6
+      "n": 738,
+      "delay_ratio": 98.5
     },
     {
       "month": 7,
-      "n": 891,
-      "delay_ratio": 96.1
+      "n": 886,
+      "delay_ratio": 96.0
     },
     {
       "month": 8,
-      "n": 369,
-      "delay_ratio": 89.4
+      "n": 387,
+      "delay_ratio": 91.2
     },
     {
       "month": 9,
       "n": 511,
-      "delay_ratio": 14.9
+      "delay_ratio": 15.1
     },
     {
       "month": 10,
-      "n": 208,
-      "delay_ratio": 5.8
+      "n": 202,
+      "delay_ratio": 5.4
     },
     {
       "month": 11,
-      "n": 288,
+      "n": 276,
       "delay_ratio": 0.0
     },
     {
       "month": 12,
-      "n": 230,
-      "delay_ratio": 79.6
+      "n": 252,
+      "delay_ratio": 78.6
     }
   ],
   "by_item": [
     {
-      "item": "감자",
-      "accuracy": 55.56,
-      "confident_accuracy": 68.5,
-      "n": 873
-    },
-    {
       "item": "고구마",
-      "accuracy": 56.82,
-      "confident_accuracy": 79.49,
+      "accuracy": 56.47,
+      "confident_accuracy": 76.92,
       "n": 873
     },
     {
       "item": "파",
-      "accuracy": 56.82,
-      "confident_accuracy": 57.77,
+      "accuracy": 56.7,
+      "confident_accuracy": 58.62,
+      "n": 873
+    },
+    {
+      "item": "감자",
+      "accuracy": 57.04,
+      "confident_accuracy": 67.84,
       "n": 873
     },
     {
       "item": "양파",
-      "accuracy": 60.67,
-      "confident_accuracy": 66.67,
+      "accuracy": 59.98,
+      "confident_accuracy": 70.05,
       "n": 867
     },
     {
       "item": "무",
-      "accuracy": 60.71,
-      "confident_accuracy": 63.88,
-      "n": 873
-    },
-    {
-      "item": "열무",
-      "accuracy": 63.12,
-      "confident_accuracy": 75.09,
+      "accuracy": 60.48,
+      "confident_accuracy": 62.87,
       "n": 873
     },
     {
       "item": "깻잎",
-      "accuracy": 63.46,
-      "confident_accuracy": 74.03,
+      "accuracy": 63.0,
+      "confident_accuracy": 72.9,
       "n": 873
     },
     {
-      "item": "알배기배추",
-      "accuracy": 63.55,
-      "confident_accuracy": 68.98,
-      "n": 771
-    },
-    {
-      "item": "배추",
-      "accuracy": 63.57,
-      "confident_accuracy": 72.38,
+      "item": "열무",
+      "accuracy": 63.23,
+      "confident_accuracy": 75.09,
       "n": 873
     },
     {
       "item": "양배추",
-      "accuracy": 64.72,
-      "confident_accuracy": 68.88,
+      "accuracy": 63.57,
+      "confident_accuracy": 69.1,
       "n": 873
     },
     {
+      "item": "배추",
+      "accuracy": 64.15,
+      "confident_accuracy": 73.45,
+      "n": 873
+    },
+    {
+      "item": "알배기배추",
+      "accuracy": 64.59,
+      "confident_accuracy": 71.61,
+      "n": 771
+    },
+    {
       "item": "시금치",
-      "accuracy": 65.75,
-      "confident_accuracy": 77.24,
+      "accuracy": 65.64,
+      "confident_accuracy": 78.68,
       "n": 873
     },
     {
       "item": "브로콜리",
-      "accuracy": 65.96,
-      "confident_accuracy": 76.3,
+      "accuracy": 66.1,
+      "confident_accuracy": 75.35,
       "n": 708
     },
     {
       "item": "상추",
-      "accuracy": 67.01,
-      "confident_accuracy": 80.67,
+      "accuracy": 66.21,
+      "confident_accuracy": 81.07,
       "n": 873
     },
     {
       "item": "얼갈이배추",
-      "accuracy": 67.7,
-      "confident_accuracy": 81.35,
+      "accuracy": 67.12,
+      "confident_accuracy": 82.41,
       "n": 873
     },
     {
       "item": "풋고추",
-      "accuracy": 68.04,
-      "confident_accuracy": 76.12,
+      "accuracy": 67.35,
+      "confident_accuracy": 77.65,
       "n": 873
     },
     {
       "item": "미나리",
-      "accuracy": 69.07,
-      "confident_accuracy": 79.47,
+      "accuracy": 69.42,
+      "confident_accuracy": 81.02,
       "n": 873
     }
   ],
   "confidence_hist": [
     {
       "x": 0.01,
-      "n": 1034
+      "n": 1048
     },
     {
       "x": 0.03,
-      "n": 1145
+      "n": 1134
     },
     {
       "x": 0.05,
-      "n": 1103
+      "n": 1084
     },
     {
       "x": 0.07,
-      "n": 1087
+      "n": 1036
     },
     {
       "x": 0.09,
-      "n": 1028
+      "n": 1057
     },
     {
       "x": 0.11,
-      "n": 888
+      "n": 890
     },
     {
       "x": 0.13,
-      "n": 865
+      "n": 866
     },
     {
       "x": 0.15,
-      "n": 746
+      "n": 782
     },
     {
       "x": 0.17,
-      "n": 678
+      "n": 675
     },
     {
       "x": 0.19,
-      "n": 737
+      "n": 721
     },
     {
       "x": 0.21,
-      "n": 664
+      "n": 683
     },
     {
       "x": 0.23,
-      "n": 614
+      "n": 643
     },
     {
       "x": 0.25,
-      "n": 582
+      "n": 566
     },
     {
       "x": 0.27,
-      "n": 543
+      "n": 558
     },
     {
       "x": 0.29,
-      "n": 450
+      "n": 441
     },
     {
       "x": 0.31,
-      "n": 417
+      "n": 396
     },
     {
       "x": 0.33,
-      "n": 327
+      "n": 329
     },
     {
       "x": 0.35,
-      "n": 272
+      "n": 269
     },
     {
       "x": 0.37,
-      "n": 242
+      "n": 225
     },
     {
       "x": 0.39,
-      "n": 129
+      "n": 153
     },
     {
       "x": 0.41,
-      "n": 79
+      "n": 78
     },
     {
       "x": 0.43,
-      "n": 46
+      "n": 45
     },
     {
       "x": 0.45,
-      "n": 19
+      "n": 16
     },
     {
       "x": 0.47,
@@ -532,54 +532,54 @@
   ],
   "reliability": [
     {
-      "predicted": 7.43,
-      "actual": 15.49,
-      "n": 71
-    },
-    {
-      "predicted": 16.1,
-      "actual": 28.73,
-      "n": 449
-    },
-    {
-      "predicted": 25.64,
-      "actual": 30.34,
-      "n": 1226
-    },
-    {
-      "predicted": 35.41,
-      "actual": 35.02,
-      "n": 2139
-    },
-    {
-      "predicted": 44.97,
-      "actual": 42.17,
-      "n": 2893
-    },
-    {
-      "predicted": 54.87,
-      "actual": 51.92,
-      "n": 2504
-    },
-    {
-      "predicted": 64.91,
-      "actual": 60.79,
-      "n": 1775
-    },
-    {
-      "predicted": 74.83,
-      "actual": 72.16,
-      "n": 1627
-    },
-    {
-      "predicted": 84.07,
-      "actual": 79.0,
-      "n": 938
-    },
-    {
-      "predicted": 91.53,
-      "actual": 97.26,
+      "predicted": 7.42,
+      "actual": 16.44,
       "n": 73
+    },
+    {
+      "predicted": 16.14,
+      "actual": 27.23,
+      "n": 415
+    },
+    {
+      "predicted": 25.66,
+      "actual": 29.3,
+      "n": 1239
+    },
+    {
+      "predicted": 35.48,
+      "actual": 36.63,
+      "n": 2165
+    },
+    {
+      "predicted": 44.98,
+      "actual": 41.73,
+      "n": 2852
+    },
+    {
+      "predicted": 54.9,
+      "actual": 50.98,
+      "n": 2507
+    },
+    {
+      "predicted": 64.94,
+      "actual": 60.88,
+      "n": 1769
+    },
+    {
+      "predicted": 74.79,
+      "actual": 72.76,
+      "n": 1652
+    },
+    {
+      "predicted": 84.19,
+      "actual": 78.79,
+      "n": 957
+    },
+    {
+      "predicted": 91.38,
+      "actual": 96.97,
+      "n": 66
     }
   ],
   "prices": {
