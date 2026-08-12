@@ -22,6 +22,46 @@
 
 <main>
 
+<!-- (0) 개요 -->
+<section id="about" class="first">
+  <h2>이게 뭔가</h2>
+  <p class="lead">
+    농산물 도매가격을 예측하는 <strong>머신러닝 모델</strong>입니다.
+    공공 API 5개를 매일 자동 수집해 BigQuery 에 쌓고, 그 데이터로
+    <strong>7거래일 뒤 가격이 오를지 내릴지</strong>를 예측합니다.
+    예측은 매일 기록되고 열흘 뒤 실제 가격으로 채점됩니다.
+  </p>
+
+  <div class="stats">
+    <div>
+      <span class="k">무엇을 맞히나</span>
+      <span class="v">가격의 <b>방향</b></span>
+      <span class="s">오를지 내릴지만. <em>얼마나</em> 오를지는 못 맞힙니다</span>
+    </div>
+    <div>
+      <span class="k">얼마나 맞히나</span>
+      <span class="v" id="ov-acc">—</span>
+      <span class="s">아무렇게나 찍으면 <span id="ov-chance">—</span></span>
+    </div>
+    <div>
+      <span class="k">확신한 날만 고르면</span>
+      <span class="v" id="ov-cacc">—</span>
+      <span class="s">전체 날의 <span id="ov-cov">—</span> 에서만 말합니다</span>
+    </div>
+    <div>
+      <span class="k">쓰는 데이터</span>
+      <span class="v" id="ov-items">—</span>
+      <span class="s"><span id="ov-rows">—</span> · 2021년부터</span>
+    </div>
+  </div>
+
+  <p class="warn">
+    <strong>여기 나오는 숫자는 전부 모델의 예측입니다.</strong>
+    사실이 아니고, 맞을 때도 틀릴 때도 있습니다.
+    위 성적은 <strong>과거 데이터로 잰 값</strong>이며 실전 검증은 아직 진행 중입니다.
+  </p>
+</section>
+
 <!-- (1) 오늘의 신호 -->
 <section id="today">
   <h2>오늘 뭘 하면 되나</h2>
@@ -62,9 +102,13 @@
     <div id="short-list" class="hold"></div>
   </details>
 
-  <h3>신호는 계절을 탑니다</h3>
+  <h3>달마다 하는 말이 다릅니다</h3>
   <p class="note">
-    확신하는 날이 여름에 몰리고, 그때는 대부분 "미루라"고 말합니다.
+    <b>막대</b>는 그 달에 모델이 확신한 날이 몇 번이었는지,
+    <b>선</b>은 그중 "미루라"고 한 비율입니다.
+    여름(6~7월)엔 확신하는 날이 많고 거의 다 미루라고 하며,
+    가을(9~11월)엔 반대로 오늘 팔라고 합니다.
+    <strong>오늘 신호가 전부 "미룸"인 것도 8월이라서입니다.</strong>
   </p>
   <div class="chart" id="chart-month"></div>
 

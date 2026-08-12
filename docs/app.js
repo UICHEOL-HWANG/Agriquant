@@ -50,6 +50,16 @@ function header(d) {
   document.getElementById("mart-info").textContent =
     `마트 ${NUM(d.mart.rows)}행 · ${d.mart.items_total}품목 중 ` +
     `운영 ${d.mart.items_operating} · 창고 후보 ${d.mart.items_storable}`;
+
+  // 개요의 숫자도 data.json 에서 채운다. 하드코딩하면 데이터가 늘어
+  // 백테스트 값이 움직일 때 개요만 옛 숫자로 남는다.
+  const bt = d.backtest;   // 위의 b 는 배지 엘리먼트다. 이름을 겹치지 않게.
+  document.getElementById("ov-acc").textContent = PCT(bt.accuracy, 1);
+  document.getElementById("ov-chance").textContent = PCT(bt.chance, 1);
+  document.getElementById("ov-cacc").textContent = PCT(bt.confident_accuracy, 1);
+  document.getElementById("ov-cov").textContent = PCT(bt.coverage, 0);
+  document.getElementById("ov-items").textContent = `${d.mart.items_operating}품목`;
+  document.getElementById("ov-rows").textContent = `${NUM(d.mart.rows)}행`;
 }
 
 // 내부 용어를 사람 말로. 사이트에 처음 온 사람은 "미룸"이 뭔지 알 수 없다.

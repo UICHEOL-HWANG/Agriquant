@@ -78,6 +78,24 @@ h3 { font-size: 1.05rem; margin: 34px 0 6px; }
 .card .foot { font-size: 0.78rem; color: var(--muted); margin-top: 3px;
               font-variant-numeric: tabular-nums; }
 
+/* 개요 — 첫 절이라 위 구분선을 뺀다 */
+section.first { border-top: none; margin-top: 8px; padding-top: 24px; }
+
+.stats { display: grid; gap: 12px; margin: 22px 0 6px;
+         grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.stats > div {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 8px; padding: 13px 15px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.stats .k { font-size: 0.78rem; color: var(--muted); }
+.stats .v { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em;
+            font-variant-numeric: tabular-nums; }
+.stats .v b { color: var(--accent); font-weight: 600; }
+.stats .s { font-size: 0.76rem; color: var(--muted); line-height: 1.5; }
+.stats .s em { font-style: normal; text-decoration: underline;
+               text-underline-offset: 2px; }
+
 /* 읽는 법 */
 .howto {
   background: var(--card); border: 1px solid var(--line);
