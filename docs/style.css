@@ -103,6 +103,8 @@ table.score td.live { color: var(--accent); font-weight: 600; }
 .limit-grid p  { margin: 0; font-size: 0.88rem; color: var(--muted); }
 
 .chart { width: 100%; height: 320px; margin: 8px 0 10px; }
+/* 계열이 많거나(가격 16품목) 세로 축이 긴(히트맵·품목별) 차트 */
+.chart.tall { height: 430px; }
 
 .warn {
   background: var(--warn-bg); border: 1px solid var(--warn-line);
@@ -119,5 +121,6 @@ footer a { color: var(--accent); }
   header { padding-top: 36px; }
   h1 { font-size: 1.7rem; }
   .chart { height: 260px; }
+  .chart.tall { height: 380px; }
   table.score td { font-size: 1rem; }
 }

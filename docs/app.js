@@ -15,6 +15,7 @@ const LINE = dark ? "#2c2e33" : "#e2e2dc";
 const UP = dark ? "#4caf80" : "#1f7a4d";
 const DOWN = dark ? "#d9714f" : "#a8442a";
 const ACCENT = dark ? "#6ea8dc" : "#2a5d8f";
+const FGLINE = dark ? "#e8e8e4" : "#1c1c1a";   // 히트맵 강조 테두리
 
 const BASE = {
   textStyle: { fontFamily: '-apple-system, "Apple SD Gothic Neo", sans-serif' },
@@ -234,6 +235,157 @@ function chartFold(d) {
   });
 }
 
+function chartPrice(d) {
+  const p = d.prices;
+  const names = Object.keys(p.series);
+  // 16계열이라 색을 골고루 벌린다. 범례 토글로 보고 싶은 것만 켠다.
+  const palette = names.map((_, i) =>
+    `hsl(${Math.round((i * 360) / names.length)} 55% ${dark ? 62 : 42}%)`);
+  draw("chart-price", {
+    color: palette,
+    tooltip: { trigger: "axis", confine: true,
+      order: "valueDesc", axisPointer: { type: "line" } },
+    legend: { type: "scroll", top: 0, textStyle: { color: MUTED, fontSize: 11 },
+              inactiveColor: LINE },
+    grid: { left: 56, right: 20, top: 56, bottom: 66 },
+    dataZoom: [{ type: "inside" }, { type: "slider", height: 18, bottom: 8 }],
+    xAxis: Object.assign({ type: "category", data: p.dates }, AXIS),
+    yAxis: Object.assign({ type: "value", name: "원/kg",
+      nameTextStyle: { color: MUTED, fontSize: 10 },
+      axisLabel: { color: MUTED, fontSize: 11,
+                   formatter: (v) => v.toLocaleString("ko-KR") } }, AXIS),
+    series: names.map((n) => ({
+      name: n, type: "line", data: p.series[n],
+      smooth: true, showSymbol: false, lineStyle: { width: 1.6 },
+      connectNulls: true, emphasis: { focus: "series" },
+    })),
+  });
+}
+
+function chartSeason(d) {
+  const s = d.seasonal;
+  const vals = s.cells.map((c) => c[2]);
+  const lim = Math.max(Math.abs(Math.min(...vals)), Math.max(...vals));
+  draw("chart-season", {
+    tooltip: {
+      confine: true,
+      formatter: (p) =>
+        `${s.items[p.value[1]]} · ${p.value[0] + 1}월<br/>` +
+        `연평균 대비 <b>${p.value[2] > 0 ? "+" : ""}${p.value[2]}%</b>`,
+    },
+    grid: { left: 78, right: 22, top: 12, bottom: 62 },
+    xAxis: Object.assign({ type: "category",
+      data: Array.from({ length: 12 }, (_, i) => i + 1 + "월"),
+      splitArea: { show: true } }, AXIS),
+    yAxis: Object.assign({ type: "category", data: s.items,
+      axisLabel: { color: MUTED, fontSize: 10 },
+      splitArea: { show: true } }, AXIS),
+    visualMap: {
+      min: -lim, max: lim, calculable: true, orient: "horizontal",
+      left: "center", bottom: 6, itemHeight: 90,
+      textStyle: { color: MUTED, fontSize: 10 },
+      // 파랑(쌈) → 빨강(비쌈). 0 이 가운데 오도록 대칭으로 잡는다.
+      inRange: { color: ["#3a6ea5", "#8fb3d0", "#f2f2ee", "#e0a080", "#b8452a"] },
+    },
+    series: [{
+      type: "heatmap", data: s.cells,
+      label: { show: false },
+      emphasis: { itemStyle: { borderColor: FGLINE, borderWidth: 1 } },
+      progressive: 0,
+    }],
+  });
+}
+
+function chartHist(d) {
+  const h = d.confidence_hist;
+  const thr = d.backtest.threshold;
+  draw("chart-hist", {
+    tooltip: { trigger: "axis", confine: true,
+      formatter: (p) => {
+        const i = p[0].dataIndex;
+        return `확신도 ${h[i].x}<br/>${NUM(h[i].n)}일`;
+      } },
+    xAxis: Object.assign({ type: "category",
+      data: h.map((x) => x.x.toFixed(2)),
+      name: "확신도 |P − 0.5|", nameLocation: "middle", nameGap: 26,
+      nameTextStyle: { color: MUTED, fontSize: 11 } }, AXIS),
+    yAxis: Object.assign({ type: "value", name: "일수",
+      nameTextStyle: { color: MUTED, fontSize: 10 } }, AXIS),
+    series: [{
+      type: "bar", data: h.map((x) => x.n), barCategoryGap: "8%",
+      itemStyle: {
+        // 임계값 오른쪽만 진하게 — 저기가 행동하는 구간이다
+        color: (p) => (h[p.dataIndex].x >= thr ? ACCENT : LINE),
+      },
+      markLine: {
+        silent: true, symbol: "none",
+        label: { formatter: `임계값 ${thr}`, color: MUTED, fontSize: 11 },
+        lineStyle: { color: DOWN, type: "dashed" },
+        data: [{ xAxis: h.findIndex((x) => x.x >= thr) }],
+      },
+      animationDelay: (i) => i * 18,
+    }],
+  });
+}
+
+function chartRel(d) {
+  const k = d.reliability;
+  draw("chart-rel", {
+    tooltip: { trigger: "axis", confine: true,
+      formatter: (p) => {
+        const i = p[0].dataIndex;
+        return `모델이 말한 확률 <b>${k[i].predicted}%</b><br/>` +
+               `실제로 오른 비율 <b>${k[i].actual}%</b><br/>표본 ${NUM(k[i].n)}건`;
+      } },
+    legend: { data: ["실제", "완벽한 보정"], top: 0,
+              textStyle: { color: MUTED, fontSize: 11 } },
+    xAxis: Object.assign({ type: "value", min: 0, max: 100,
+      name: "모델이 말한 확률", nameLocation: "middle", nameGap: 26,
+      nameTextStyle: { color: MUTED, fontSize: 11 },
+      axisLabel: { color: MUTED, fontSize: 11, formatter: "{value}%" } }, AXIS),
+    yAxis: Object.assign({ type: "value", min: 0, max: 100,
+      axisLabel: { color: MUTED, fontSize: 11, formatter: "{value}%" } }, AXIS),
+    series: [
+      { name: "완벽한 보정", type: "line", data: [[0, 0], [100, 100]],
+        showSymbol: false, lineStyle: { color: MUTED, type: "dashed", width: 1.4 },
+        silent: true },
+      { name: "실제", type: "line",
+        data: k.map((x) => [x.predicted, x.actual]),
+        smooth: true, symbolSize: (v, p) => 5 + Math.sqrt(k[p.dataIndex].n) / 12,
+        lineStyle: { color: ACCENT, width: 2.5 }, itemStyle: { color: ACCENT } },
+    ],
+  });
+}
+
+function chartItem(d) {
+  const it = d.by_item;
+  draw("chart-item", {
+    tooltip: { trigger: "axis", confine: true,
+      formatter: (p) => {
+        const i = p[0].dataIndex;
+        const c = it[i].confident_accuracy;
+        return `${it[i].item}<br/>적중률 <b>${it[i].accuracy}%</b>` +
+               (c ? `<br/>확신한 날 <b>${c}%</b>` : "") +
+               `<br/>표본 ${NUM(it[i].n)}건`;
+      } },
+    legend: { data: ["전체", "확신한 날"], top: 0,
+              textStyle: { color: MUTED, fontSize: 11 } },
+    grid: { left: 74, right: 24, top: 34, bottom: 34 },
+    xAxis: Object.assign({ type: "value", min: 45, max: 85,
+      axisLabel: { color: MUTED, fontSize: 11, formatter: "{value}%" } }, AXIS),
+    yAxis: Object.assign({ type: "category", data: it.map((x) => x.item),
+      axisLabel: { color: MUTED, fontSize: 10.5 } }, AXIS),
+    series: [
+      { name: "전체", type: "bar", data: it.map((x) => x.accuracy),
+        itemStyle: { color: ACCENT, borderRadius: [0, 3, 3, 0] },
+        animationDelay: (i) => i * 35 },
+      { name: "확신한 날", type: "scatter",
+        data: it.map((x) => [x.confident_accuracy, x.item]),
+        symbolSize: 9, itemStyle: { color: UP } },
+    ],
+  });
+}
+
 // ── 시작 ───────────────────────────────────────────────────────
 fetch("data.json", { cache: "no-cache" })
   .then((r) => {
@@ -245,9 +397,14 @@ fetch("data.json", { cache: "no-cache" })
     signals(d);
     scoreTable(d);
     chartMonth(d);
+    chartPrice(d);
+    chartSeason(d);
     chartCum(d);
     chartConf(d);
+    chartHist(d);
+    chartRel(d);
     chartFold(d);
+    chartItem(d);
   })
   .catch((e) => {
     const b = document.getElementById("freshness");

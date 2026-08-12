@@ -208,6 +208,98 @@ def by_month(r: pd.DataFrame, items: list[str]) -> list[dict]:
     return out
 
 
+def by_item(r: pd.DataFrame, items: list[str]) -> list[dict]:
+    """품목별 적중률. 품목마다 편차가 큰 걸 보여준다.
+
+    품목 단위 숫자는 노이즈가 크다(1.3~2.8%p). 순위를 근거로 삼지 말고
+    "고르게 잘 맞히지는 않는다" 정도로만 읽어야 한다.
+    """
+    sub = r[r.item.isin(items)]
+    out = []
+    for it, s in sub.groupby("item"):
+        확신 = s[s.확신도 >= CFG.THRESHOLD]
+        out.append({
+            "item": it,
+            "accuracy": round(float(s.방향맞음.mean()) * 100, 2),
+            "confident_accuracy": (round(float(확신.방향맞음.mean()) * 100, 2)
+                                   if len(확신) else None),
+            "n": int(len(s)),
+        })
+    return sorted(out, key=lambda x: x["accuracy"])
+
+
+def confidence_hist(r: pd.DataFrame, items: list[str], bins: int = 25) -> list[dict]:
+    """확신도 분포. 임계값 0.20 이 어디를 자르는지 눈으로 보게 한다."""
+    v = r[r.item.isin(items)].확신도.to_numpy()
+    cnt, edges = np.histogram(v, bins=bins, range=(0, 0.5))
+    return [{"x": round(float((edges[i] + edges[i + 1]) / 2), 3),
+             "n": int(cnt[i])} for i in range(len(cnt))]
+
+
+def reliability(r: pd.DataFrame, items: list[str], bins: int = 10) -> list[dict]:
+    """신뢰도 곡선: 모델이 말한 확률 vs 실제로 오른 비율.
+
+    대각선에 붙을수록 확률이 정직하다. 30번에서 보정을 걸어도 나아지지
+    않았는데, 애초에 잘 맞아 있어서였다.
+    """
+    sub = r[r.item.isin(items)]
+    edges = np.linspace(0, 1, bins + 1)
+    out = []
+    for i in range(bins):
+        m = (sub.오를확률 >= edges[i]) & (sub.오를확률 < edges[i + 1])
+        s = sub[m]
+        if len(s) < 40:          # 표본이 얇은 구간은 버린다
+            continue
+        out.append({
+            "predicted": round(float(s.오를확률.mean()) * 100, 2),
+            "actual": round(float(s.오름.mean()) * 100, 2),
+            "n": int(len(s)),
+        })
+    return out
+
+
+def price_series(df: pd.DataFrame, items: list[str], years: int = 2) -> dict:
+    """품목별 가격 시계열. 주 단위로 접어 용량을 줄인다.
+
+    일별로 두면 data.json 이 수백 KB 가 되고, 매일 커밋되므로 저장소가
+    빠르게 불어난다. 주간이면 형태는 그대로 보이면서 1/5 로 준다.
+    """
+    cut = df.price_date.max() - pd.Timedelta(days=365 * years)
+    d = df[(df.price_date >= cut) & (df.item.isin(items))]
+    w = (d.set_index("price_date").groupby("item").price_kg_avg
+         .resample("W").mean().reset_index())
+    dates = sorted(w.price_date.unique())
+    idx = {d_: i for i, d_ in enumerate(dates)}
+    series = {}
+    for it, g in w.groupby("item"):
+        arr = [None] * len(dates)
+        for d_, v in zip(g.price_date, g.price_kg_avg):
+            arr[idx[d_]] = None if pd.isna(v) else round(float(v))
+        series[it] = arr
+    return {"dates": [str(pd.Timestamp(x).date()) for x in dates],
+            "series": series}
+
+
+def seasonal(df: pd.DataFrame, items: list[str]) -> dict:
+    """품목 x 월 계절 편차(%). 그 품목 자기 평균 대비라 품목끼리 비교된다.
+
+    01번에서 '계절이 가장 큰 신호'라고 나왔는데, 그게 눈에 보이는 형태다.
+    """
+    d = df[df.item.isin(items)].copy()
+    d["월"] = d.price_date.dt.month
+    base = d.groupby("item").price_kg_avg.mean()
+    g = d.groupby(["item", "월"]).price_kg_avg.mean()
+    cells = []
+    order = sorted(items)
+    for i, it in enumerate(order):
+        for m in range(1, 13):
+            if (it, m) not in g.index:
+                continue
+            dev = (g[(it, m)] / base[it] - 1) * 100
+            cells.append([m - 1, i, round(float(dev), 1)])
+    return {"items": order, "cells": cells}
+
+
 def main() -> Path:
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s [%(levelname)s] %(message)s")
@@ -240,6 +332,11 @@ def main() -> Path:
         "by_fold": by_fold(r, 운영),
         "by_confidence": by_confidence(r, 운영),
         "by_month": by_month(r, 운영),
+        "by_item": by_item(r, 운영),
+        "confidence_hist": confidence_hist(r, 운영),
+        "reliability": reliability(r, 운영),
+        "prices": price_series(df_mart, 운영),
+        "seasonal": seasonal(df_mart, 운영),
     }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
