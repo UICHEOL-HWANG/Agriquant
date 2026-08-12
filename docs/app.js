@@ -52,26 +52,43 @@ function header(d) {
     `운영 ${d.mart.items_operating} · 창고 후보 ${d.mart.items_storable}`;
 }
 
-function signals(d) {
-  // 행동할 것 = 확신했고 저장이 되는 품목. 저장 10일 미만은 미룰 수 없다.
-  const act = d.signals.filter((s) => s.signal !== "판단 보류" && s.storable);
-  const hold = d.signals.filter((s) => s.signal === "판단 보류" || !s.storable);
+// 내부 용어를 사람 말로. 사이트에 처음 온 사람은 "미룸"이 뭔지 알 수 없다.
+const ACTION = {
+  "미룸": { label: "열흘 뒤에 파세요", why: "오를 것 같습니다", cls: "up" },
+  "오늘 판매": { label: "오늘 파세요", why: "내릴 것 같습니다", cls: "down" },
+};
 
+function signals(d) {
+  // 셋으로 나눈다. 예전엔 '애매함'과 '저장 불가'를 한 덩어리로 묶어서,
+  // 확률 87% 인 미나리가 이유도 없이 사라져 보였다.
+  const act = d.signals.filter((s) => ACTION[s.signal] && s.storable);
+  const short = d.signals.filter((s) => ACTION[s.signal] && !s.storable);
+  const hold = d.signals.filter((s) => !ACTION[s.signal]);
+
+  document.getElementById("action-title").style.display = act.length ? "" : "none";
   document.getElementById("action-cards").innerHTML = act.length
     ? act.map((s) => {
-        const up = s.signal === "미룸";
-        return `<div class="card ${up ? "up" : "down"}">
+        const a = ACTION[s.signal];
+        return `<div class="card ${a.cls}">
           <div class="name">${s.item}</div>
-          <div class="sig ${up ? "up" : "down"}">${s.signal}</div>
-          <div class="prob">${PCT(s.prob_up * 100)}</div>
-          <div class="foot">저장 ${s.storage_days}일 · ${NUM(s.price)}원/kg</div>
+          <div class="act ${a.cls}">${a.label}</div>
+          <div class="why">${a.why} · 확률 <b>${PCT(s.prob_up * 100)}</b></div>
+          <div class="foot">오늘 ${NUM(s.price)}원/kg · 저장 ${s.storage_days}일</div>
         </div>`;
       }).join("")
-    : `<p class="note">오늘은 확신하는 신호가 없습니다. 평소대로 하면 됩니다.</p>`;
+    : `<p class="note">오늘은 확실한 신호가 없습니다. <strong>평소대로</strong> 하면 됩니다.</p>`;
+
+  const chip = (s, extra) =>
+    `<span>${s.item} <b>${PCT(s.prob_up * 100)}</b>${extra}</span>`;
 
   document.getElementById("hold-count").textContent = `${hold.length}개`;
-  document.getElementById("hold-list").innerHTML = hold
-    .map((s) => `<span>${s.item} ${PCT(s.prob_up * 100)}</span>`).join("");
+  document.getElementById("hold-list").innerHTML =
+    hold.map((s) => chip(s, "")).join("") || `<span class="none">없음</span>`;
+
+  document.getElementById("short-count").textContent = `${short.length}개`;
+  document.getElementById("short-list").innerHTML =
+    short.map((s) => chip(s, ` · 저장 ${s.storage_days}일`)).join("") ||
+    `<span class="none">없음</span>`;
 }
 
 function scoreTable(d) {
