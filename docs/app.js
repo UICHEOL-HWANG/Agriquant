@@ -26,6 +26,14 @@ const BASE = {
     backgroundColor: "rgba(15,19,56,0.94)",
     borderColor: "#262d63",
     textStyle: { color: "#e8ecff", fontSize: 12 },
+    // 십자선. 값을 축까지 따라가며 읽을 수 있어야 대시보드로 쓸 만하다.
+    axisPointer: {
+      type: "cross",
+      lineStyle: { color: "#5eead4", opacity: 0.45, width: 1 },
+      crossStyle: { color: "#5eead4", opacity: 0.45 },
+      label: { backgroundColor: "#1b2154", borderColor: "#262d63",
+               borderWidth: 1, color: "#e8ecff" },
+    },
   },
 };
 
@@ -40,15 +48,72 @@ const AXIS = {
   splitLine: { lineStyle: { color: LINE, type: "dashed" } },
 };
 
+// 차트는 화면에 들어올 때 그린다. 로딩 시점에 9개를 한꺼번에 그리면
+// 스크롤해서 도착할 즈음엔 애니메이션이 이미 끝나 정적으로 보인다.
+// 초기 로딩도 가벼워진다.
 const charts = [];
-function draw(id, option) {
+const byId = {};
+const pending = new Map();
+
+function mount(el) {
+  const job = pending.get(el);
+  if (!job) return byId[el.id];
+  pending.delete(el);
+  const c = echarts.init(el, null, { renderer: "canvas" });
+  // tooltip 은 깊게 합친다. 얕게 두면 차트가 자기 tooltip 을 정의하는 순간
+  // BASE 의 십자선·배경색이 통째로 사라진다.
+  const opt = Object.assign({}, BASE, job.option);
+  if (job.option.tooltip) {
+    opt.tooltip = Object.assign({}, BASE.tooltip, job.option.tooltip);
+  }
+  c.setOption(opt);
+  charts.push(c);
+  byId[el.id] = c;
+  if (job.onReady) job.onReady(c);
+  return c;
+}
+
+// IntersectionObserver 를 쓰지 않는다. 임베드 브라우저에서 콜백이 아예
+// 안 오는 경우를 만났고(2026-08-12), 그러면 차트가 통째로 안 뜬다.
+// 스크롤 위치를 직접 재면 어디서든 같은 결과가 나온다.
+function visible(el) {
+  const r = el.getBoundingClientRect();
+  return r.top < innerHeight * 0.92 && r.bottom > innerHeight * 0.08;
+}
+
+function sweep() {
+  if (!pending.size) return;
+  [...pending.keys()].forEach((el) => visible(el) && mount(el));
+}
+
+// requestAnimationFrame 으로 스로틀하지 않는다. 임베드 브라우저에서
+// rAF 가 아예 안 돌아 차트가 하나도 안 그려지는 경우를 만났다(2026-08-12).
+// 타임스탬프 비교는 어디서든 같게 동작한다.
+let lastSweep = 0;
+function onScroll() {
+  const now = Date.now();
+  if (now - lastSweep < 80) return;
+  lastSweep = now;
+  sweep();
+}
+addEventListener("scroll", onScroll, { passive: true });
+
+function draw(id, option, onReady) {
   const el = document.getElementById(id);
   if (!el) return;
-  const c = echarts.init(el, null, { renderer: "canvas" });
-  c.setOption(Object.assign({}, BASE, option));
-  charts.push(c);
+  pending.set(el, { option, onReady });
 }
-addEventListener("resize", () => charts.forEach((c) => c.resize()));
+
+/** 아직 안 그려졌으면 지금 그린다. 차트끼리 연동할 때 필요하다. */
+function ensure(id) {
+  const el = document.getElementById(id);
+  return el ? (byId[id] || mount(el)) : null;
+}
+
+addEventListener("resize", () => {
+  onScroll();                              // 창이 커지면 새로 보이는 차트가 생긴다
+  charts.forEach((c) => c.resize());
+});
 
 // ── 히어로 ─────────────────────────────────────────────────────
 // 파형은 장식이다. 데이터를 나타내지 않으므로 축도 값도 붙이지 않는다.
@@ -474,6 +539,19 @@ function chartRel(d) {
   });
 }
 
+/** 품목별 차트에서 막대를 누르면 위쪽 가격 차트를 그 품목만 남기고 이동한다. */
+function focusItem(item) {
+  const pc = ensure("chart-price");
+  if (!pc) return;
+  const names = Object.keys(pc.getOption().series.reduce(
+    (a, s) => (a[s.name] = 1, a), {}));
+  names.forEach((n) => pc.dispatchAction({
+    type: n === item ? "legendSelect" : "legendUnSelect", name: n,
+  }));
+  document.getElementById("chart-price")
+    .scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 function chartItem(d) {
   const it = d.by_item;
   draw("chart-item", {
@@ -500,6 +578,12 @@ function chartItem(d) {
         data: it.map((x) => [x.confident_accuracy, x.item]),
         symbolSize: 9, itemStyle: { color: UP } },
     ],
+  }, (c) => {
+    c.getZr().on("click", () => {});          // 커서 힌트용
+    c.on("click", (p) => {
+      const name = p.componentType === "yAxis" ? p.value : it[p.dataIndex]?.item;
+      if (name) focusItem(name);
+    });
   });
 }
 
@@ -527,6 +611,7 @@ fetch("data.json", { cache: "no-cache" })
     chartRel(d);
     chartFold(d);
     chartItem(d);
+    sweep();          // 첫 화면에 이미 보이는 차트를 바로 그린다
   })
   .catch((e) => {
     const b = document.getElementById("freshness");
