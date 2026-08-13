@@ -9,19 +9,31 @@ const PCT = (v, d = 1) => (v === null || v === undefined ? "—" : v.toFixed(d) 
 const NUM = (v) => (v === null || v === undefined ? "—" : v.toLocaleString("ko-KR"));
 
 // 다크모드에 맞춰 축·글자 색을 바꾼다. 차트가 배경에서 뜨지 않게.
-const dark = matchMedia("(prefers-color-scheme: dark)").matches;
-const MUTED = dark ? "#9a9a94" : "#6b6b66";
-const LINE = dark ? "#2c2e33" : "#e2e2dc";
-const UP = dark ? "#4caf80" : "#1f7a4d";
-const DOWN = dark ? "#d9714f" : "#a8442a";
-const ACCENT = dark ? "#6ea8dc" : "#2a5d8f";
-const FGLINE = dark ? "#e8e8e4" : "#1c1c1a";   // 히트맵 강조 테두리
+// style.css 의 :root 토큰과 같은 값이다. 한쪽만 바꾸면 차트가 배경에서 뜬다.
+const dark = true;         // 다크 전용
+const MUTED = "#8f97c9";
+const LINE = "#262d63";
+const UP = "#5eead4";      // 미룸 — 민트
+const DOWN = "#ff9e7d";    // 오늘 판매 — 살구
+const ACCENT = "#5eead4";
+const FGLINE = "#e8ecff";  // 히트맵 강조 테두리
 
 const BASE = {
   textStyle: { fontFamily: '-apple-system, "Apple SD Gothic Neo", sans-serif' },
   grid: { left: 48, right: 20, top: 34, bottom: 40 },
-  tooltip: { trigger: "axis", confine: true },
+  tooltip: {
+    trigger: "axis", confine: true,
+    backgroundColor: "rgba(15,19,56,0.94)",
+    borderColor: "#262d63",
+    textStyle: { color: "#e8ecff", fontSize: 12 },
+  },
 };
+
+// 선에 은은한 발광을 준다. 딥 네이비 배경에서 선이 묻히지 않게 하는 용도라
+// 값을 과장하면 안 된다(그림자만, 굵기는 그대로).
+const GLOW = (color) => ({
+  color, width: 2.5, shadowColor: color, shadowBlur: 10,
+});
 const AXIS = {
   axisLine: { lineStyle: { color: LINE } },
   axisLabel: { color: MUTED, fontSize: 11 },
@@ -37,6 +49,81 @@ function draw(id, option) {
   charts.push(c);
 }
 addEventListener("resize", () => charts.forEach((c) => c.resize()));
+
+// ── 히어로 ─────────────────────────────────────────────────────
+// 파형은 장식이다. 데이터를 나타내지 않으므로 축도 값도 붙이지 않는다.
+// 실제 숫자처럼 보이면 안 되니 라벨을 달지 않는 게 중요하다.
+function wave() {
+  const c = document.getElementById("wave");
+  if (!c) return;
+  const ctx = c.getContext("2d");
+  const slow = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let w, h, dpr;
+
+  function size() {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    w = c.clientWidth; h = c.clientHeight;
+    c.width = w * dpr; c.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  size();
+  addEventListener("resize", size);
+
+  const LINES = 22;
+  let t = 0;
+  (function frame() {
+    ctx.clearRect(0, 0, w, h);
+    for (let i = 0; i < LINES; i++) {
+      const p = i / (LINES - 1);
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 6) {
+        const k = x / w;
+        const y = h * (0.62 + p * 0.3)
+          + Math.sin(k * 5.5 + t + p * 1.6) * (26 + p * 16)
+          + Math.sin(k * 2.1 - t * 0.7 + p * 0.8) * 14;
+        x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.strokeStyle = `rgba(94, 234, 212, ${0.05 + (1 - p) * 0.16})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    t += slow ? 0 : 0.006;
+    requestAnimationFrame(frame);
+  })();
+}
+
+// 히어로에 떠 있는 칩. 실제 최근 가격 변화라 장식이 아니다.
+function chips(d) {
+  const box = document.getElementById("chips");
+  const p = d.prices;
+  if (!box || !p) return;
+  const names = Object.keys(p.series);
+
+  // 주간 시계열의 마지막 두 값으로 변화율을 낸다. null 이면 건너뛴다.
+  const rows = [];
+  for (const n of names) {
+    const s = p.series[n].filter((v) => v !== null);
+    if (s.length < 2) continue;
+    const a = s[s.length - 2], b = s[s.length - 1];
+    if (!a) continue;
+    rows.push({ item: n, pct: ((b - a) / a) * 100 });
+  }
+  // 많이 움직인 순으로 6개만. 다 띄우면 제목을 가린다.
+  rows.sort((x, y) => Math.abs(y.pct) - Math.abs(x.pct));
+
+  // 제목·배지가 왼쪽 위~가운데를 차지하므로 칩은 가장자리로만 보낸다.
+  // 겹치면 배지의 날짜가 칩에 파묻혀 못 읽는다(실제로 그랬다).
+  const spots = [
+    [4, 6], [70, 4], [86, 30], [3, 78], [66, 84], [88, 62],
+  ];
+  box.innerHTML = rows.slice(0, spots.length).map((r, i) => {
+    const up = r.pct >= 0;
+    const [l, t] = spots[i];
+    return `<span class="chip ${up ? "up" : "down"}"
+      style="left:${l}%; top:${t}%; animation-delay:${(i * 0.9).toFixed(1)}s">
+      ${r.item}<b>${up ? "▲" : "▼"} ${Math.abs(r.pct).toFixed(1)}%</b></span>`;
+  }).join("");
+}
 
 // ── 화면 채우기 ────────────────────────────────────────────────
 function header(d) {
@@ -146,7 +233,7 @@ function chartMonth(d) {
         animationDelay: (i) => i * 40 },
       { name: "그중 미룸 비중", type: "line", yAxisIndex: 1, smooth: true,
         data: m.map((x) => x.delay_ratio),
-        lineStyle: { color: UP, width: 2.5 }, itemStyle: { color: UP },
+        lineStyle: GLOW(UP), itemStyle: { color: UP },
         symbolSize: 6 },
     ],
   });
@@ -194,7 +281,7 @@ function chartCum(d) {
       axisLabel: { color: MUTED, fontSize: 11, formatter: "{value}%" } }, AXIS),
     series: [{
       type: "line", smooth: true, data: c.map((x) => x.accuracy),
-      lineStyle: { color: ACCENT, width: 2.5 }, itemStyle: { color: ACCENT },
+      lineStyle: GLOW(ACCENT), itemStyle: { color: ACCENT },
       areaStyle: { color: ACCENT, opacity: 0.1 },
       markLine: mark,
     }],
@@ -216,7 +303,7 @@ function chartConf(d) {
     series: [
       { name: "적중률", type: "line", smooth: true,
         data: k.map((x) => x.accuracy),
-        lineStyle: { color: UP, width: 2.5 }, itemStyle: { color: UP },
+        lineStyle: GLOW(UP), itemStyle: { color: UP },
         markLine: {
           silent: true, symbol: "none",
           label: { formatter: "운영 지점", color: MUTED, fontSize: 11 },
@@ -266,9 +353,10 @@ function chartFold(d) {
 function chartPrice(d) {
   const p = d.prices;
   const names = Object.keys(p.series);
-  // 16계열이라 색을 골고루 벌린다. 범례 토글로 보고 싶은 것만 켠다.
+  // 색상환 전체를 쓰면 네이비 배경에서 붉은 계열이 튄다. 민트(160°)에서
+  // 보라(280°)까지만 돌려 배경과 같은 계열 안에 머물게 한다.
   const palette = names.map((_, i) =>
-    `hsl(${Math.round((i * 360) / names.length)} 55% ${dark ? 62 : 42}%)`);
+    `hsl(${Math.round(160 + (i * 120) / names.length)} 65% 65%)`);
   draw("chart-price", {
     color: palette,
     tooltip: { trigger: "axis", confine: true,
@@ -312,8 +400,9 @@ function chartSeason(d) {
       min: -lim, max: lim, calculable: true, orient: "horizontal",
       left: "center", bottom: 6, itemHeight: 90,
       textStyle: { color: MUTED, fontSize: 10 },
-      // 파랑(쌈) → 빨강(비쌈). 0 이 가운데 오도록 대칭으로 잡는다.
-      inRange: { color: ["#3a6ea5", "#8fb3d0", "#f2f2ee", "#e0a080", "#b8452a"] },
+      // 민트(쌈) → 살구(비쌈). 0 이 가운데 오도록 대칭으로 잡고,
+      // 가운데를 배경 계열로 둬서 차트가 화면에 얹힌 것처럼 보이게 한다.
+      inRange: { color: ["#2f9e8a", "#4bc7ad", "#1b2154", "#d98a63", "#ff7a4d"] },
     },
     series: [{
       type: "heatmap", data: s.cells,
@@ -380,7 +469,7 @@ function chartRel(d) {
       { name: "실제", type: "line",
         data: k.map((x) => [x.predicted, x.actual]),
         smooth: true, symbolSize: (v, p) => 5 + Math.sqrt(k[p.dataIndex].n) / 12,
-        lineStyle: { color: ACCENT, width: 2.5 }, itemStyle: { color: ACCENT } },
+        lineStyle: GLOW(ACCENT), itemStyle: { color: ACCENT } },
     ],
   });
 }
@@ -415,6 +504,10 @@ function chartItem(d) {
 }
 
 // ── 시작 ───────────────────────────────────────────────────────
+// 파형은 데이터와 무관하므로 fetch 를 기다리지 않는다. 네트워크가 느려도
+// 첫 화면이 비어 보이지 않게 하는 게 목적이다.
+wave();
+
 fetch("data.json", { cache: "no-cache" })
   .then((r) => {
     if (!r.ok) throw new Error(`data.json ${r.status}`);
@@ -422,6 +515,7 @@ fetch("data.json", { cache: "no-cache" })
   })
   .then((d) => {
     header(d);
+    chips(d);
     signals(d);
     scoreTable(d);
     chartMonth(d);

@@ -1,26 +1,23 @@
 /* agriquant 사이트 스타일.
    프레임워크를 안 쓴다 — 화면이 한 장이라 CSS 도 한 장이면 충분하다. */
 
+/* 다크 전용이다. 라이트 모드를 같이 두면 이 분위기(딥 네이비 + 민트)가
+   안 나오고, 두 벌을 맞추느라 색이 계속 밋밋해진다.
+   app.js 가 차트에 같은 값을 쓰므로 색을 바꾸면 거기도 함께 고칠 것. */
 :root {
-  --bg: #fbfbf9;
-  --fg: #1c1c1a;
-  --muted: #6b6b66;
-  --line: #e2e2dc;
-  --card: #ffffff;
-  --up: #1f7a4d;          /* 미룸 */
-  --down: #a8442a;        /* 오늘 판매 */
-  --hold: #8a8a84;        /* 판단 보류 */
-  --accent: #2a5d8f;
-  --warn-bg: #fff8e6;
-  --warn-line: #e8d9a8;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #16171a; --fg: #e8e8e4; --muted: #9a9a94; --line: #2c2e33;
-    --card: #1e2024; --warn-bg: #2a2617; --warn-line: #4a4128;
-    --up: #4caf80; --down: #d9714f; --accent: #6ea8dc;
-  }
+  --bg: #0f1338;          /* 딥 네이비 */
+  --bg-deep: #090c26;     /* 히어로 아래쪽 */
+  --fg: #e8ecff;
+  --muted: #8f97c9;
+  --line: #262d63;
+  --card: #161b4b;
+  --up: #5eead4;          /* 미룸 — 민트 */
+  --down: #ff9e7d;        /* 오늘 판매 — 살구 */
+  --hold: #6b74a8;
+  --accent: #5eead4;
+  --warn-bg: #171c4a;
+  --warn-line: #2f3a7a;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -34,10 +31,47 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-header, main, footer { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+main, footer { max-width: 880px; margin: 0 auto; padding: 0 20px; }
 
-header { padding-top: 56px; padding-bottom: 8px; }
-h1 { font-size: 2.1rem; margin: 0; letter-spacing: -0.02em; }
+/* ── 히어로 ─────────────────────────────────────────────────
+   파형 캔버스를 배경에 깔고 그 위에 제목·시세 칩을 얹는다.
+   캔버스는 pointer-events 를 끊어 아래 텍스트 선택을 막지 않는다. */
+header {
+  position: relative; overflow: hidden;
+  /* 칩이 제목을 피해 가장자리에 놓이려면 세로 여백이 필요하다 */
+  padding: 96px 20px 76px;
+  background: radial-gradient(120% 90% at 50% 0%, #1a2160 0%, var(--bg) 55%,
+                              var(--bg-deep) 100%);
+  border-bottom: 1px solid var(--line);
+}
+#wave { position: absolute; inset: 0; width: 100%; height: 100%;
+        pointer-events: none; }
+.hero { position: relative; max-width: 880px; margin: 0 auto; }
+
+h1 { font-size: 2.6rem; margin: 0; letter-spacing: -0.03em; font-weight: 700; }
+.tag { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.22em;
+       color: var(--accent); opacity: 0.85; margin: 0 0 10px; }
+
+/* 떠 있는 시세 칩 — 실제 최근 변화율이다. 장식이 아니다. */
+.chips { position: absolute; inset: 0; pointer-events: none; }
+.chip {
+  position: absolute; font-family: var(--mono); font-size: 0.72rem;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: rgba(15, 19, 56, 0.72);
+  color: var(--muted); white-space: nowrap;
+  backdrop-filter: blur(3px);
+  animation: float 7s ease-in-out infinite;
+}
+.chip b { font-weight: 600; margin-left: 5px; }
+.chip.up b   { color: var(--up); }
+.chip.down b { color: var(--down); }
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip { animation: none; }
+}
 .sub { font-size: 1.05rem; color: var(--muted); margin: 10px 0 14px; }
 .meta { font-size: 0.85rem; color: var(--muted); display: flex;
         gap: 12px; align-items: center; flex-wrap: wrap; margin: 0; }
@@ -60,10 +94,13 @@ h3 { font-size: 1.05rem; margin: 34px 0 6px; }
 .cards { display: grid; gap: 10px;
          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .card {
-  background: var(--card); border: 1px solid var(--line);
+  background: linear-gradient(160deg, var(--card) 0%, rgba(15,19,56,0.9) 100%);
+  border: 1px solid var(--line);
   border-left: 3px solid var(--hold);
-  border-radius: 8px; padding: 12px 14px;
+  border-radius: 10px; padding: 13px 15px;
+  transition: border-color 0.2s, transform 0.2s;
 }
+.card:hover { transform: translateY(-2px); border-color: var(--accent); }
 .card.up   { border-left-color: var(--up); }
 .card.down { border-left-color: var(--down); }
 .card .name { font-size: 0.85rem; color: var(--muted); }
@@ -88,9 +125,10 @@ section.first { border-top: none; margin-top: 8px; padding-top: 24px; }
   border-radius: 8px; padding: 13px 15px;
   display: flex; flex-direction: column; gap: 3px;
 }
-.stats .k { font-size: 0.78rem; color: var(--muted); }
-.stats .v { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em;
-            font-variant-numeric: tabular-nums; }
+.stats .k { font-size: 0.72rem; color: var(--muted); font-family: var(--mono);
+            letter-spacing: 0.06em; }
+.stats .v { font-size: 1.55rem; font-weight: 600; letter-spacing: -0.02em;
+            font-variant-numeric: tabular-nums; color: var(--accent); }
 .stats .v b { color: var(--accent); font-weight: 600; }
 .stats .s { font-size: 0.76rem; color: var(--muted); line-height: 1.5; }
 .stats .s em { font-style: normal; text-decoration: underline;
