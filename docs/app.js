@@ -215,9 +215,18 @@ function header(d) {
 }
 
 // 내부 용어를 사람 말로. 사이트에 처음 온 사람은 "미룸"이 뭔지 알 수 없다.
+// why 를 함수로 두는 이유: '오늘 판매'는 하락 확률이 필요한데 데이터에는
+// prob_up(오를 확률)만 있다. 예전엔 양쪽 다 prob_up 을 찍어서, 하락 확률
+// 78% 인 품목이 "내릴 것 같습니다 · 확률 22%" 로 거꾸로 나왔다.
 const ACTION = {
-  "미룸": { label: "열흘 뒤에 파세요", why: "가격이 오를 것 같습니다", cls: "up" },
-  "오늘 판매": { label: "오늘 파세요", why: "가격이 내릴 것 같습니다", cls: "down" },
+  "미룸": {
+    label: "10일 후 출하", cls: "up",
+    why: (p) => `가격 인상 예측 가능성 <b>${PCT(p * 100)}</b>`,
+  },
+  "오늘 판매": {
+    label: "오늘 출하", cls: "down",
+    why: (p) => `가격 하락 예측 가능성 <b>${PCT((1 - p) * 100)}</b>`,
+  },
 };
 
 function signals(d) {
@@ -234,12 +243,14 @@ function signals(d) {
         return `<div class="card ${a.cls}">
           <div class="name">${s.item}</div>
           <div class="act ${a.cls}">${a.label}</div>
-          <div class="why">${a.why} · 확률 <b>${PCT(s.prob_up * 100)}</b></div>
-          <div class="foot">오늘 ${NUM(s.price)}원/kg · 저장 ${s.storage_days}일</div>
+          <div class="why">${a.why(s.prob_up)}</div>
+          <div class="foot">오늘 ${NUM(s.price)}원/kg · 보관 ${s.storage_days}일</div>
         </div>`;
       }).join("")
     : `<p class="note">오늘은 확실한 신호가 없습니다. <strong>평소대로</strong> 하면 됩니다.</p>`;
 
+  // 칩의 숫자가 무엇인지 안 적으면 그냥 퍼센트로만 보인다.
+  // 좁은 칩에 다 넣을 수 없어 절 설명에서 한 번 밝히고 여기선 값만 둔다.
   const chip = (s, extra) =>
     `<span>${s.item} <b>${PCT(s.prob_up * 100)}</b>${extra}</span>`;
 
@@ -282,21 +293,21 @@ function scoreTable(d) {
 function chartMonth(d) {
   const m = d.by_month;
   draw("chart-month", {
-    legend: { data: ["확신한 날", "그중 미룸 비중"], top: 0,
+    legend: { data: ["신호 나온 날", "보관 권장 비율"], top: 0,
               textStyle: { color: MUTED, fontSize: 11 } },
     xAxis: Object.assign({ type: "category",
       data: m.map((x) => x.month + "월") }, AXIS),
     yAxis: [
       Object.assign({ type: "value", name: "일수",
         nameTextStyle: { color: MUTED, fontSize: 10 } }, AXIS),
-      Object.assign({ type: "value", name: "미룸 %", max: 100,
+      Object.assign({ type: "value", name: "보관 %", max: 100,
         nameTextStyle: { color: MUTED, fontSize: 10 } }, AXIS),
     ],
     series: [
-      { name: "확신한 날", type: "bar", data: m.map((x) => x.n),
+      { name: "신호 나온 날", type: "bar", data: m.map((x) => x.n),
         itemStyle: { color: ACCENT, borderRadius: [3, 3, 0, 0] },
         animationDelay: (i) => i * 40 },
-      { name: "그중 미룸 비중", type: "line", yAxisIndex: 1, smooth: true,
+      { name: "보관 권장 비율", type: "line", yAxisIndex: 1, smooth: true,
         data: m.map((x) => x.delay_ratio),
         lineStyle: GLOW(UP), itemStyle: { color: UP },
         symbolSize: 6 },

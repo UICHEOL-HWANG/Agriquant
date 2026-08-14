@@ -91,8 +91,9 @@ h3 { font-size: 1.05rem; margin: 34px 0 6px; }
 .note { color: var(--muted); font-size: 0.9rem; margin: 4px 0 12px; }
 
 /* 신호 카드 */
+/* 220px 아래로 좁아지면 "최대 보관 30 / 일" 처럼 마지막 줄이 끊긴다 */
 .cards { display: grid; gap: 10px;
-         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+         grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); }
 .card {
   background: linear-gradient(160deg, var(--card) 0%, rgba(15,19,56,0.9) 100%);
   border: 1px solid var(--line);

@@ -71,19 +71,20 @@
 <section id="today">
   <h2>오늘의 출하 판단</h2>
   <p class="lead">
-    출하할 물건을 <strong>오늘 낼지, 열흘쯤 두었다 낼지</strong>만 봅니다.
+    오늘 출하할지, <strong>10일쯤 보관했다 출하할지</strong>를 판단합니다.
   </p>
 
   <div class="howto">
     <h3>신호 읽는 법</h3>
     <ol>
-      <li>모델은 <strong>7거래일 뒤(약 열흘)</strong> 도매가가
-          오늘보다 <strong>오를지 내릴지</strong>만 맞힙니다.
-          <em>얼마나</em> 오를지는 못 맞힙니다.</li>
-      <li>확률이 한쪽으로 충분히 기운 날만 말합니다.
-          애매한 날은 <strong>아무 말도 하지 않습니다.</strong></li>
-      <li>열흘을 못 버티는 품목은 미룰 수가 없어 <strong>대상에서 뺍니다</strong>
-          (시금치·미나리처럼 저장 7일짜리).</li>
+      <li><strong>10일 후 출하</strong> — 가격이 오를 것으로 보여 보관을 권합니다.
+          <strong>오늘 출하</strong> — 가격이 내릴 것으로 보여 지금 내보내는 편이 낫습니다.</li>
+      <li>예측 대상은 <strong>방향</strong>뿐입니다. 오를지 내릴지는 판단하지만
+          <em>얼마나</em> 오를지는 예측하지 못합니다.</li>
+      <li>확률이 한쪽으로 충분히 기운 날에만 신호를 냅니다.
+          애매한 날은 <strong>판단하지 않습니다.</strong></li>
+      <li>보관 가능 일수가 10일 미만인 품목은 미룰 수 없어 대상에서 제외합니다
+          (시금치·미나리 등).</li>
     </ol>
   </div>
 
@@ -91,29 +92,31 @@
   <div class="cards" id="action-cards"></div>
 
   <details>
-    <summary>모델이 애매하다고 한 품목 <span id="hold-count"></span></summary>
+    <summary>판단을 보류한 품목 <span id="hold-count"></span></summary>
     <p class="note">
-      확률이 반반에 가까워 신호를 내지 않습니다. <strong>평소대로</strong> 하면 됩니다.
+      확률이 반반에 가까워 신호를 내지 않았습니다. <strong>평소대로</strong>
+      하시면 됩니다. 옆의 숫자는 <b>가격 인상 예측 가능성</b>입니다.
     </p>
     <div id="hold-list" class="hold"></div>
   </details>
 
   <details>
-    <summary>미룰 수 없어 뺀 품목 <span id="short-count"></span></summary>
+    <summary>보관이 어려워 제외한 품목 <span id="short-count"></span></summary>
     <p class="note">
-      저장 가능 일수가 <strong>열흘 미만</strong>이라, 오를 것 같아도 창고에
-      둘 수 없습니다. 확률이 높아도 여기 있으면 오늘 내보내는 게 맞습니다.
+      보관 가능 일수가 <strong>10일 미만</strong>이라 가격이 오를 것으로 보여도
+      미룰 수 없습니다. 예측 가능성이 높아도 오늘 출하하는 편이 낫습니다.
+      옆의 숫자는 <b>가격 인상 예측 가능성</b>입니다.
     </p>
     <div id="short-list" class="hold"></div>
   </details>
 
   <h3>월별 신호 발생 추이</h3>
   <p class="note">
-    <b>막대</b>는 그 달에 모델이 확신한 날이 몇 번이었는지,
-    <b>선</b>은 그중 "미루라"고 한 비율입니다.
-    여름(6~7월)엔 확신하는 날이 많고 거의 다 미루라고 하며,
-    가을(9~11월)엔 반대로 오늘 팔라고 합니다.
-    <strong>오늘 신호가 전부 "미룸"인 것도 8월이라서입니다.</strong>
+    <b>막대</b>는 그 달에 신호가 나온 날의 수,
+    <b>선</b>은 그중 <b>10일 후 출하</b> 판단이 차지한 비율입니다.
+    여름(6~7월)에는 신호가 많고 대부분 보관을 권하며,
+    가을(9~11월)에는 반대로 즉시 출하를 권합니다.
+    <strong>오늘 신호가 모두 보관 쪽인 것도 8월이기 때문입니다.</strong>
   </p>
   <div class="chart" id="chart-month"></div>
 
