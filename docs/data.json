@@ -1,74 +1,74 @@
 {
-  "generated_at": "2026-08-17T19:05:41+09:00",
-  "as_of": "2026-08-14",
+  "generated_at": "2026-08-18T18:58:38+09:00",
+  "as_of": "2026-08-18",
   "mart": {
-    "rows": 24179,
-    "last_date": "2026-08-14",
-    "freshness_days": 3,
+    "rows": 24198,
+    "last_date": "2026-08-18",
+    "freshness_days": 0,
     "items_total": 19,
     "items_operating": 16,
     "items_storable": 11
   },
   "signals": [
     {
+      "item": "미나리",
+      "signal": "미룸",
+      "prob_up": 0.8633,
+      "confidence": 0.3633,
+      "price": 8482,
+      "storage_days": 7,
+      "storable": false
+    },
+    {
+      "item": "양배추",
+      "signal": "미룸",
+      "prob_up": 0.8308,
+      "confidence": 0.3308,
+      "price": 825,
+      "storage_days": 50,
+      "storable": true
+    },
+    {
       "item": "시금치",
       "signal": "미룸",
-      "prob_up": 0.8574,
-      "confidence": 0.3574,
-      "price": 13020,
+      "prob_up": 0.8287,
+      "confidence": 0.3287,
+      "price": 13340,
       "storage_days": 7,
       "storable": false
     },
     {
       "item": "배추",
       "signal": "미룸",
-      "prob_up": 0.8505,
-      "confidence": 0.3505,
-      "price": 1378,
+      "prob_up": 0.8205,
+      "confidence": 0.3205,
+      "price": 1350,
       "storage_days": 30,
       "storable": true
     },
     {
-      "item": "미나리",
-      "signal": "미룸",
-      "prob_up": 0.8485,
-      "confidence": 0.3485,
-      "price": 9065,
-      "storage_days": 7,
-      "storable": false
-    },
-    {
       "item": "상추",
       "signal": "미룸",
-      "prob_up": 0.8245,
-      "confidence": 0.3245,
-      "price": 9530,
+      "prob_up": 0.7887,
+      "confidence": 0.2887,
+      "price": 9335,
       "storage_days": 10,
-      "storable": true
-    },
-    {
-      "item": "양배추",
-      "signal": "미룸",
-      "prob_up": 0.8092,
-      "confidence": 0.3092,
-      "price": 891,
-      "storage_days": 50,
       "storable": true
     },
     {
       "item": "브로콜리",
       "signal": "미룸",
-      "prob_up": 0.797,
-      "confidence": 0.297,
-      "price": 5772,
+      "prob_up": 0.7859,
+      "confidence": 0.2859,
+      "price": 5785,
       "storage_days": 14,
       "storable": true
     },
     {
       "item": "양파",
       "signal": "미룸",
-      "prob_up": 0.79,
-      "confidence": 0.29,
+      "prob_up": 0.7687,
+      "confidence": 0.2687,
       "price": 1188,
       "storage_days": 165,
       "storable": true
@@ -76,105 +76,111 @@
     {
       "item": "얼갈이배추",
       "signal": "미룸",
-      "prob_up": 0.7726,
-      "confidence": 0.2726,
-      "price": 2698,
+      "prob_up": 0.7664,
+      "confidence": 0.2664,
+      "price": 2606,
       "storage_days": 10,
-      "storable": true
-    },
-    {
-      "item": "감자",
-      "signal": "미룸",
-      "prob_up": 0.7448,
-      "confidence": 0.2448,
-      "price": 1787,
-      "storage_days": 45,
       "storable": true
     },
     {
       "item": "알배기배추",
       "signal": "미룸",
-      "prob_up": 0.7346,
-      "confidence": 0.2346,
-      "price": 3890,
+      "prob_up": 0.7535,
+      "confidence": 0.2535,
+      "price": 3900,
       "storage_days": 20,
+      "storable": true
+    },
+    {
+      "item": "감자",
+      "signal": "미룸",
+      "prob_up": 0.7351,
+      "confidence": 0.2351,
+      "price": 1783,
+      "storage_days": 45,
       "storable": true
     },
     {
       "item": "무",
       "signal": "판단 보류",
-      "prob_up": 0.6888,
-      "confidence": 0.1888,
-      "price": 813,
+      "prob_up": 0.6627,
+      "confidence": 0.1627,
+      "price": 853,
       "storage_days": 45,
       "storable": true
     },
     {
       "item": "파",
       "signal": "판단 보류",
-      "prob_up": 0.6115,
-      "confidence": 0.1115,
-      "price": 2294,
+      "prob_up": 0.6522,
+      "confidence": 0.1522,
+      "price": 2398,
       "storage_days": 7,
       "storable": false
     },
     {
       "item": "풋고추",
       "signal": "판단 보류",
-      "prob_up": 0.609,
-      "confidence": 0.109,
-      "price": 7383,
+      "prob_up": 0.62,
+      "confidence": 0.12,
+      "price": 7433,
       "storage_days": 14,
       "storable": true
     },
     {
       "item": "열무",
       "signal": "판단 보류",
-      "prob_up": 0.4369,
-      "confidence": 0.0631,
-      "price": 3490,
+      "prob_up": 0.4512,
+      "confidence": 0.0488,
+      "price": 3228,
       "storage_days": 7,
       "storable": false
     },
     {
       "item": "고구마",
       "signal": "판단 보류",
-      "prob_up": 0.4817,
-      "confidence": 0.0183,
-      "price": 3626,
+      "prob_up": 0.5352,
+      "confidence": 0.0352,
+      "price": 3674,
       "storage_days": 60,
       "storable": true
     },
     {
       "item": "깻잎",
       "signal": "판단 보류",
-      "prob_up": 0.5106,
-      "confidence": 0.0106,
-      "price": 17770,
+      "prob_up": 0.4951,
+      "confidence": 0.0049,
+      "price": 18250,
       "storage_days": 7,
       "storable": false
     }
   ],
   "backtest": {
     "accuracy": 63.17,
-    "confident_accuracy": 74.11,
-    "coverage": 32.27,
-    "n": 13743,
-    "n_confident": 4435,
+    "confident_accuracy": 74.13,
+    "coverage": 32.31,
+    "n": 13759,
+    "n_confident": 4446,
     "threshold": 0.2,
-    "chance": 50.11
+    "chance": 50.13
   },
   "live": {
     "spec_version": "82dd395a856b",
-    "refits": 4,
-    "predictions": 64,
+    "refits": 5,
+    "predictions": 80,
     "scored": 0,
     "accuracy": null,
     "confident_accuracy": null,
     "first_date": "2026-08-11",
-    "last_date": "2026-08-14"
+    "last_date": "2026-08-18"
   },
-  "cumulative": [],
+  "cumulative": [
+    {
+      "date": "2026-08-06",
+      "n": 16,
+      "accuracy": 68.75
+    }
+  ],
   "by_fold": [
     {
       "fold": "2023-01-01",
@@ -208,8 +214,8 @@
     },
     {
       "fold": "2026-01-01",
-      "accuracy": 65.6,
-      "n": 2320
+      "accuracy": 65.58,
+      "n": 2336
     }
   ],
   "by_confidence": [
@@ -217,49 +223,49 @@
       "threshold": 0.0,
       "coverage": 100.0,
       "accuracy": 63.17,
-      "n": 13743
+      "n": 13759
     },
     {
       "threshold": 0.05,
-      "coverage": 80.26,
-      "accuracy": 65.67,
-      "n": 11030
+      "coverage": 80.27,
+      "accuracy": 65.66,
+      "n": 11044
     },
     {
       "threshold": 0.1,
-      "coverage": 60.92,
-      "accuracy": 68.53,
-      "n": 8372
+      "coverage": 60.93,
+      "accuracy": 68.54,
+      "n": 8383
     },
     {
       "threshold": 0.15,
-      "coverage": 45.14,
-      "accuracy": 71.24,
-      "n": 6204
+      "coverage": 45.17,
+      "accuracy": 71.26,
+      "n": 6215
     },
     {
       "threshold": 0.2,
-      "coverage": 32.27,
-      "accuracy": 74.11,
-      "n": 4435
+      "coverage": 32.31,
+      "accuracy": 74.13,
+      "n": 4446
     },
     {
       "threshold": 0.25,
-      "coverage": 20.5,
-      "accuracy": 76.86,
-      "n": 2818
+      "coverage": 20.54,
+      "accuracy": 76.89,
+      "n": 2826
     },
     {
       "threshold": 0.3,
-      "coverage": 11.08,
+      "coverage": 11.11,
       "accuracy": 78.27,
-      "n": 1523
+      "n": 1528
     },
     {
       "threshold": 0.35,
       "coverage": 4.73,
-      "accuracy": 79.38,
-      "n": 650
+      "accuracy": 79.42,
+      "n": 651
     },
     {
       "threshold": 0.4,
@@ -306,8 +312,8 @@
     },
     {
       "month": 8,
-      "n": 420,
-      "delay_ratio": 91.9
+      "n": 431,
+      "delay_ratio": 92.1
     },
     {
       "month": 9,
@@ -332,106 +338,106 @@
   ],
   "by_item": [
     {
-      "item": "고구마",
-      "accuracy": 56.62,
-      "confident_accuracy": 76.92,
-      "n": 876
+      "item": "파",
+      "accuracy": 56.56,
+      "confident_accuracy": 58.62,
+      "n": 877
     },
     {
-      "item": "파",
-      "accuracy": 56.62,
-      "confident_accuracy": 58.62,
-      "n": 876
+      "item": "고구마",
+      "accuracy": 56.67,
+      "confident_accuracy": 76.92,
+      "n": 877
     },
     {
       "item": "감자",
-      "accuracy": 57.19,
-      "confident_accuracy": 68.32,
-      "n": 876
+      "accuracy": 57.24,
+      "confident_accuracy": 68.47,
+      "n": 877
     },
     {
       "item": "양파",
-      "accuracy": 60.11,
-      "confident_accuracy": 70.45,
-      "n": 870
+      "accuracy": 60.16,
+      "confident_accuracy": 70.59,
+      "n": 871
     },
     {
       "item": "무",
-      "accuracy": 60.62,
-      "confident_accuracy": 63.33,
-      "n": 876
+      "accuracy": 60.66,
+      "confident_accuracy": 63.49,
+      "n": 877
     },
     {
       "item": "열무",
-      "accuracy": 63.01,
+      "accuracy": 62.94,
       "confident_accuracy": 75.09,
-      "n": 876
+      "n": 877
     },
     {
       "item": "깻잎",
-      "accuracy": 63.13,
-      "confident_accuracy": 73.15,
-      "n": 876
+      "accuracy": 63.17,
+      "confident_accuracy": 73.23,
+      "n": 877
     },
     {
       "item": "양배추",
-      "accuracy": 63.7,
-      "confident_accuracy": 69.42,
-      "n": 876
+      "accuracy": 63.63,
+      "confident_accuracy": 69.18,
+      "n": 877
     },
     {
       "item": "배추",
-      "accuracy": 64.27,
-      "confident_accuracy": 73.72,
-      "n": 876
+      "accuracy": 64.31,
+      "confident_accuracy": 73.81,
+      "n": 877
     },
     {
       "item": "알배기배추",
-      "accuracy": 64.73,
-      "confident_accuracy": 71.97,
-      "n": 774
+      "accuracy": 64.77,
+      "confident_accuracy": 72.08,
+      "n": 775
     },
     {
       "item": "시금치",
-      "accuracy": 65.64,
-      "confident_accuracy": 78.59,
-      "n": 876
+      "accuracy": 65.68,
+      "confident_accuracy": 78.64,
+      "n": 877
     },
     {
       "item": "상추",
-      "accuracy": 65.98,
-      "confident_accuracy": 80.39,
-      "n": 876
+      "accuracy": 65.91,
+      "confident_accuracy": 80.17,
+      "n": 877
     },
     {
       "item": "브로콜리",
-      "accuracy": 66.1,
-      "confident_accuracy": 75.26,
-      "n": 711
+      "accuracy": 66.15,
+      "confident_accuracy": 75.35,
+      "n": 712
     },
     {
       "item": "얼갈이배추",
-      "accuracy": 67.12,
+      "accuracy": 67.05,
       "confident_accuracy": 82.41,
-      "n": 876
+      "n": 877
     },
     {
       "item": "풋고추",
-      "accuracy": 67.12,
+      "accuracy": 67.05,
       "confident_accuracy": 77.65,
-      "n": 876
+      "n": 877
     },
     {
       "item": "미나리",
-      "accuracy": 69.52,
-      "confident_accuracy": 81.19,
-      "n": 876
+      "accuracy": 69.56,
+      "confident_accuracy": 81.25,
+      "n": 877
     }
   ],
   "confidence_hist": [
     {
       "x": 0.01,
-      "n": 1049
+      "n": 1051
     },
     {
       "x": 0.03,
@@ -439,11 +445,11 @@
     },
     {
       "x": 0.05,
-      "n": 1085
+      "n": 1086
     },
     {
       "x": 0.07,
-      "n": 1040
+      "n": 1042
     },
     {
       "x": 0.09,
@@ -475,15 +481,15 @@
     },
     {
       "x": 0.23,
-      "n": 651
+      "n": 653
     },
     {
       "x": 0.25,
-      "n": 570
+      "n": 571
     },
     {
       "x": 0.27,
-      "n": 563
+      "n": 566
     },
     {
       "x": 0.29,
@@ -491,15 +497,15 @@
     },
     {
       "x": 0.31,
-      "n": 401
+      "n": 404
     },
     {
       "x": 0.33,
-      "n": 330
+      "n": 331
     },
     {
       "x": 0.35,
-      "n": 273
+      "n": 274
     },
     {
       "x": 0.37,
@@ -553,13 +559,13 @@
     },
     {
       "predicted": 44.98,
-      "actual": 41.83,
-      "n": 2857
+      "actual": 41.87,
+      "n": 2859
     },
     {
       "predicted": 54.9,
-      "actual": 51.03,
-      "n": 2514
+      "actual": 51.01,
+      "n": 2517
     },
     {
       "predicted": 64.94,
@@ -568,13 +574,13 @@
     },
     {
       "predicted": 74.8,
-      "actual": 72.86,
-      "n": 1673
+      "actual": 72.9,
+      "n": 1679
     },
     {
-      "predicted": 84.18,
+      "predicted": 84.17,
       "actual": 78.95,
-      "n": 969
+      "n": 974
     },
     {
       "predicted": 91.38,
@@ -584,7 +590,6 @@
   ],
   "prices": {
     "dates": [
-      "2024-08-18",
       "2024-08-25",
       "2024-09-01",
       "2024-09-08",
@@ -688,11 +693,11 @@
       "2026-07-26",
       "2026-08-02",
       "2026-08-09",
-      "2026-08-16"
+      "2026-08-16",
+      "2026-08-23"
     ],
     "series": {
       "감자": [
-        1694,
         1694,
         1723,
         1729,
@@ -796,10 +801,10 @@
         1695,
         1697,
         1736,
-        1763
+        1763,
+        1783
       ],
       "고구마": [
-        3098,
         3126,
         3223,
         3224,
@@ -903,10 +908,10 @@
         3376,
         3368,
         3542,
-        3635
+        3635,
+        3674
       ],
       "깻잎": [
-        16000,
         18384,
         17590,
         18964,
@@ -1010,10 +1015,10 @@
         10868,
         12108,
         13890,
-        16812
+        16812,
+        18250
       ],
       "무": [
-        1208,
         1564,
         1606,
         1484,
@@ -1117,10 +1122,10 @@
         646,
         582,
         633,
-        792
+        792,
+        853
       ],
       "미나리": [
-        9452,
         11131,
         15957,
         16603,
@@ -1224,10 +1229,10 @@
         5233,
         6548,
         7584,
-        8400
+        8400,
+        8482
       ],
       "배추": [
-        2279,
         2246,
         2214,
         2584,
@@ -1331,10 +1336,10 @@
         846,
         1080,
         1168,
-        1331
+        1331,
+        1350
       ],
       "브로콜리": [
-        6320,
         6120,
         6719,
         7240,
@@ -1438,10 +1443,10 @@
         5160,
         5194,
         5632,
-        5718
+        5718,
+        5785
       ],
       "상추": [
-        13005,
         13652,
         13802,
         17430,
@@ -1545,10 +1550,10 @@
         8209,
         9499,
         9968,
-        9606
+        9606,
+        9335
       ],
       "시금치": [
-        17722,
         28542,
         29820,
         32190,
@@ -1652,10 +1657,10 @@
         9000,
         11381,
         12693,
-        13063
+        13063,
+        13340
       ],
       "알배기배추": [
-        3702,
         4520,
         5022,
         5194,
@@ -1759,10 +1764,10 @@
         2062,
         2274,
         3064,
-        3712
+        3712,
+        3900
       ],
       "양배추": [
-        1227,
         1318,
         1218,
         1244,
@@ -1866,10 +1871,10 @@
         877,
         850,
         829,
-        875
+        875,
+        825
       ],
       "양파": [
-        1221,
         1221,
         1235,
         1222,
@@ -1973,10 +1978,10 @@
         1041,
         1091,
         1142,
-        1175
+        1175,
+        1188
       ],
       "얼갈이배추": [
-        2655,
         3196,
         3792,
         3841,
@@ -2080,10 +2085,10 @@
         2052,
         2393,
         2745,
-        2688
+        2688,
+        2606
       ],
       "열무": [
-        2776,
         2715,
         3161,
         3281,
@@ -2187,10 +2192,10 @@
         2554,
         2862,
         3144,
-        3380
+        3380,
+        3228
       ],
       "파": [
-        2165,
         2220,
         2090,
         2327,
@@ -2294,10 +2299,10 @@
         2064,
         2132,
         2392,
-        2341
+        2341,
+        2398
       ],
       "풋고추": [
-        7298,
         8081,
         7704,
         8326,
@@ -2401,7 +2406,8 @@
         4418,
         6076,
         6777,
-        7150
+        7150,
+        7433
       ]
     }
   },
@@ -2463,7 +2469,7 @@
       [
         7,
         0,
-        -15.1
+        -15.2
       ],
       [
         8,
@@ -2523,7 +2529,7 @@
       [
         7,
         1,
-        3.2
+        3.3
       ],
       [
         8,
@@ -2578,12 +2584,12 @@
       [
         6,
         2,
-        -14.5
+        -14.6
       ],
       [
         7,
         2,
-        18.7
+        18.8
       ],
       [
         8,
@@ -2643,7 +2649,7 @@
       [
         7,
         3,
-        21.8
+        21.6
       ],
       [
         8,
@@ -2703,12 +2709,12 @@
       [
         7,
         4,
-        27.4
+        27.3
       ],
       [
         8,
         4,
-        51.9
+        51.8
       ],
       [
         9,
@@ -2748,7 +2754,7 @@
       [
         4,
         5,
-        -23.1
+        -23.2
       ],
       [
         5,
@@ -2763,7 +2769,7 @@
       [
         7,
         5,
-        42.3
+        42.0
       ],
       [
         8,
@@ -2823,7 +2829,7 @@
       [
         7,
         6,
-        30.8
+        30.6
       ],
       [
         8,
@@ -2848,7 +2854,7 @@
       [
         0,
         7,
-        -3.9
+        -4.0
       ],
       [
         1,
@@ -2883,12 +2889,12 @@
       [
         7,
         7,
-        69.5
+        69.1
       ],
       [
         8,
         7,
-        89.0
+        88.9
       ],
       [
         9,
@@ -2908,7 +2914,7 @@
       [
         0,
         8,
-        -36.7
+        -36.8
       ],
       [
         1,
@@ -2923,37 +2929,37 @@
       [
         3,
         8,
-        -50.8
+        -50.9
       ],
       [
         4,
         8,
-        -46.4
+        -46.5
       ],
       [
         5,
         8,
-        -35.0
+        -35.1
       ],
       [
         6,
         8,
-        52.8
+        52.7
       ],
       [
         7,
         8,
-        148.4
+        147.9
       ],
       [
         8,
         8,
-        148.4
+        148.2
       ],
       [
         9,
         8,
-        3.8
+        3.7
       ],
       [
         10,
@@ -2963,12 +2969,12 @@
       [
         11,
         8,
-        -48.5
+        -48.6
       ],
       [
         0,
         9,
-        -17.2
+        -17.3
       ],
       [
         1,
@@ -2983,7 +2989,7 @@
       [
         3,
         9,
-        -4.7
+        -4.8
       ],
       [
         4,
@@ -3003,12 +3009,12 @@
       [
         7,
         9,
-        39.1
+        38.9
       ],
       [
         8,
         9,
-        63.0
+        62.9
       ],
       [
         9,
@@ -3063,7 +3069,7 @@
       [
         7,
         10,
-        0.8
+        0.5
       ],
       [
         8,
@@ -3083,7 +3089,7 @@
       [
         11,
         10,
-        -8.0
+        -7.9
       ],
       [
         0,
@@ -3123,7 +3129,7 @@
       [
         7,
         11,
-        0.6
+        0.5
       ],
       [
         8,
@@ -3183,7 +3189,7 @@
       [
         7,
         12,
-        30.1
+        30.0
       ],
       [
         8,
@@ -3208,7 +3214,7 @@
       [
         0,
         13,
-        21.8
+        21.7
       ],
       [
         1,
@@ -3218,7 +3224,7 @@
       [
         2,
         13,
-        11.4
+        11.3
       ],
       [
         3,
@@ -3228,7 +3234,7 @@
       [
         4,
         13,
-        -23.5
+        -23.6
       ],
       [
         5,
@@ -3243,7 +3249,7 @@
       [
         7,
         13,
-        15.9
+        16.0
       ],
       [
         8,
@@ -3363,7 +3369,7 @@
       [
         7,
         15,
-        -13.7
+        -13.5
       ],
       [
         8,
